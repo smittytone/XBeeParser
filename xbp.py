@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 # Imports
-import sys
+import sys, math
 
 # 'Constants'
 # XBee Request Commands
-XBEE_CMD_AT = 0x08
-XBEE_CMD_QUEUE_PARAM_VALUE = 0x09
-XBEE_CMD_ZIGBEE_TRANSMIT_REQ = 0x10
+XBEE_CMD_AT                        = 0x08
+XBEE_CMD_QUEUE_PARAM_VALUE         = 0x09
+XBEE_CMD_ZIGBEE_TRANSMIT_REQ       = 0x10
 XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME = 0x11
-XBEE_CMD_REMOTE_CMD_REQ = 0x17
-XBEE_CMD_CREATE_SOURCE_ROUTE = 0x21
+XBEE_CMD_REMOTE_CMD_REQ            = 0x17
+XBEE_CMD_CREATE_SOURCE_ROUTE       = 0x21
 
 # XBee Response Frame IDs
 XBEE_CMD_AT_RESPONSE = 0x88
@@ -26,6 +26,31 @@ XBEE_CMD_ROUTE_RECORD_INDICATOR = 0xA1
 XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR = 0xA2
 # NOT YET SUPPORTED
 XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS = 0xA0
+
+# ZCL Global Commands
+ZCL_GLOBAL_CMD_READ_ATTR_REQ      = 0x00
+ZCL_GLOBAL_CMD_READ_ATTR_RSP      = 0x01
+ZCL_GLOBAL_CMD_WRITE_ATTR_REQ     = 0x02
+ZCL_GLOBAL_CMD_WRITE_ATTR_UND     = 0x03
+ZCL_GLOBAL_CMD_WRITE_ATTR_RSP     = 0x04
+ZCL_GLOBAL_CMD_WRITE_ATTR_NO      = 0x05
+ZCL_GLOBAL_CMD_CONF_REPT_REQ      = 0x06
+ZCL_GLOBAL_CMD_CONF_REPT_RSP      = 0x07
+ZCL_GLOBAL_CMD_READ_REPT_REQ      = 0x08
+ZCL_GLOBAL_CMD_READ_REPT_RSP      = 0x09
+ZCL_GLOBAL_CMD_REPT_ATTR          = 0x0A
+ZCL_GLOBAL_CMD_DEFAULT_RSP        = 0x0B
+ZCL_GLOBAL_CMD_DISC_ATTR_REQ      = 0x0C
+ZCL_GLOBAL_CMD_DISC_ATTR_RSP      = 0x0D
+ZCL_GLOBAL_CMD_READ_ATTR_STR_REQ  = 0x0E
+ZCL_GLOBAL_CMD_WRITE_ATTR_STR_REQ = 0x0F
+ZCL_GLOBAL_CMD_WRITE_ATTR_STR_RSP = 0x10
+ZCL_GLOBAL_CMD_DISC_RCMDS_REQ     = 0x11
+ZCL_GLOBAL_CMD_DISC_RCMDS_RSP     = 0x12
+ZCL_GLOBAL_CMD_DISC_GCMDS_REQ     = 0x13
+ZCL_GLOBAL_CMD_DISC_GCMDS_RSP     = 0x14
+ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ  = 0x15
+ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP  = 0x16
 
 # App Constants
 TEXT_SIZE = 30
@@ -103,7 +128,7 @@ def processPacket(packet):
     cs = 0
     for i in range(3, len(values)):
         cs = cs + values[i]
-    cs = cs & 0xFF;
+    cs = cs & 0xFF
     if cs != 0xFF:
         print("[ERROR] Packet checksum test failed")
         return
@@ -192,6 +217,25 @@ def decodeModemStatus(data):
     getModemStatus(data[4])
 
 
+def decodeZigbeeTransmitStatus(data):
+    # The Xbee has received an Zigbee transmit status packet (frame ID 0x8B)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    print(padText("XBee Command ID") + getHex(data[3],2))
+    print(padText("XBee Frame ID") + getHex(data[4],2))
+    print(padText("Address (16)") + getHex(((data[5] << 8) + data[6]),4))
+    
+    if data[7] == 0:
+        print(padText("Retries") + "None")
+    else:
+        print(padText("Retries") + str(data[7]))
+
+    getDeliveryStatus(data[8])
+    getDiscoveryStatus(data[9])
+
+
 def decodeZigbeeRXIndicator(data):
     # The Xbee has received a Zigbee ZCL packet (frame ID 0x91)
     # Parameters:
@@ -225,11 +269,55 @@ def decodeZCLFrame(frameData):
     
     global zclCmds
     
-    fc = frameData[0]
-    tr = frameData[1]
-    ci = frameData[2]
+    manSpec = False
+    globalCmd = True
 
-    print(padText("  Frame Control Byte") + getHex(fc,2))
+    fc = frameData[0]
+
+    fcs = ""
+    for i in range(0,8):
+        if i == 1 or i > 4:
+            fcs = "0" + fcs
+            continue
+        v = int(math.pow(2,i))
+        if fc & v == v:
+            fcs = "1" + fcs
+        else:
+            fcs = "0" + fcs
+
+    print(padText("  Frame Control Byte") + getHex(fc,2) + " [" + fcs + "]")
+    
+    if fc & 0x01 == 0x01:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Command is specific to cluster")
+        globalCmd = False
+    else:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Command is global to ZCL")
+
+    if fc & 0x08 == 0:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: Client to Server")
+    else:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: Server to Client")
+
+    if fc & 0x04 == 0x04:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Manufacturer-specific commands in data")
+        manSpec = True
+    else:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  No manufacturer-specific commands in data")
+
+    if fc & 0x10 == 0x10:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Default Response disabled")
+    else:
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Default Response enabled")
+    
+    index = 1
+    if manSpec is True:
+        mc = (frameData[3] << 8) + frameData[4]
+        print(padText("  Manufacturer code") + getHex(mc,4))
+        index = 5
+    
+    tr = frameData[index]
+    ci = frameData[index + 1]
+
     print(padText("  Transaction Number") + getHex(tr,2))
     
     if fc & 0x01 == 0:
@@ -237,10 +325,78 @@ def decodeZCLFrame(frameData):
     else:
         print(padText("  Cluster Command") + getHex(ci,2))
 
-    if fc & 0x08 == 0:
-        print(padText("  Direction") + "Client to Server")
+    # Payload is at 'index' + 2
+    if globalCmd is True:
+        # Only decode global commands for now
+        decodeZCLCommand(ci, index, frameData)
     else:
-        print(padText("  Direction") + "Server to Client")
+        ds = ""
+        for i in range(index, len(frameData)):
+            ds = ds + getHex(data[i],2)
+        print(padText("  Data") + ds)
+
+
+def decodeZCLCommand(cmd, start, data):
+    if cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
+        for i in range(start, len(data), 2):
+            v = (data[i] << 8) + data[i + 1]
+            print(padText("  Attribute ID") + getHex(v,4))
+    elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP:
+        done = False
+        i = start
+        while done is False:
+            id = (data[i] << 8) + data[i + 1]
+            print(padText("  Attribute ID") + getHex(v,4))
+            print(padText("  Attribute Status") + getZCLAttributeStatus[data[i + 2]])
+            if data[i + 2] == 0:
+                print(padText("  Attribute Type") + getZCLAttributeType[data[i + 3]])
+                l = getZCLAttributeSize(data[i + 3])
+                if l != -1:
+                    # The data is of a fixed size ('l')
+                    if data[i + 3] == 0x10:
+                        # Handle Boolean values separately
+                        s = "FORBIDDEN"
+                        if data[i + 4] == 0x00:
+                            s = "FALSE"
+                        else:
+                            s = "TRUE"
+                        print(padText("  Attribute Value") + s)
+                        i = i + 5  
+                    else:   
+                        # Handle all other numeric values
+                        i = i + 4 + l
+                        v = 0
+                        k = 0
+                        for j in range(i, i - l, -1):
+                            v = v + (data[j] << k)
+                            k = k + 8
+                        print(padText("  Attribute Value") + getHex(v,l))
+                else:
+                    if data[i + 3] == 0x41 or data[i + 3] == 0x42:
+                        l = data[i + 4]
+                        ds = ""
+                        for j in range(i + 5, i + 5 + l):
+                            ds = ds + chr(data[j])
+                        print(padText("  Attribute Value") + ds)
+                        i = i + 4 + l
+                    elif data[i + 3] == 0x43 or data[i + 3] == 0x44:
+                        l = (data[i + 4] << 8) + data[i + 5]
+                        ds = ""
+                        for j in range(i + 6, i + 6 + l):
+                            ds = ds + chr(data[j])
+                        print(padText("  Attribute Value") + ds)
+                        i = i + 5 + l
+                    else:
+                        # TODO
+                        print(padText("  Attribute Value") + "TBD")
+                        i = i + 3
+            else:
+                # Attribute access unsuccessful
+                i = i + 3
+            if i >= len(data):
+                done = True
+            
+
 
 
 def read64bitAddress(frameData, start = 4):
@@ -354,6 +510,174 @@ def getDiscoveryStatus(code):
         print(padText("Discovery status") + m[code])
     else:
         print(padText("Discovery status") + "[ERROR] " + getHex(code,2))
+
+
+def getZCLAttributeStatus(code):
+    m = [   0x00, "Success",
+            0x01, "Failure",
+            0x7e, "Not authorized",
+            0x7f, "Reserved field not zero",
+            0x80, "Malformed command",
+            0x81, "Unsupported cluster command",
+            0x82, "Unsupported general command",
+            0x83, "Unsupported manufacturer's cluster command",
+            0x84, "Unsupported manufacturer's general command",
+            0x85, "Invalid field",
+            0x86, "Unsupported attribute",
+            0x87, "Invalid value",
+            0x88, "Read only",
+            0x89, "Insufficient space",
+            0x8a, "Duplicate exists",
+            0x8b, "Not found",    
+            0x8c, "Unreportable attribute", 
+            0x8d, "Invalid data type",
+            0x8e, "Invalid selector", 
+            0x8f, "Write only", 
+            0x90, "Not found", 
+            0x91, "Not found",
+            0x92, "Read only",
+            0x93, "Insufficient space",
+            0x94, "Duplicate exists",
+            0x95, "Not found",    
+            0x96, "Unreportable attribute", 
+            0x97, "Invalid data type",
+            0x98, "Invalid selector", 
+            0x99, "Write only", 
+            0x9a, "Not found", 
+            0xc0, "Not found",   
+            0xc1, "Not found",   
+            0xc2, "Not found",   
+            0xc3, "Not found"]
+    for i in range(0, len(m), 2):
+        if code == m[i]:
+            return m[i + 1]
+    return "Unknown"
+
+
+def getZCLAttributeType(code):
+    m = [   0x00, "NULL",
+            0x08, "DATA8",
+            0x09, "DATA16",
+            0x0a, "DATA24",
+            0x0b, "DATA32",
+            0x0c, "DATA40",
+            0x0d, "DATA48",
+            0x0e, "DATA56",
+            0x0f, "DATA64",
+            0x10, "BOOL",
+            0x18, "MAP8",
+            0x19, "MAP16",
+            0x1a, "MAP24",
+            0x1b, "MAP32",
+            0x1c, "MAP40",
+            0x1d, "MAP48",    
+            0x1e, "MAP56", 
+            0x1f, "MAP64",
+            0x20, "UINT8", 
+            0x21, "UINT16", 
+            0x22, "UINT24", 
+            0x23, "UINT32",
+            0x24, "UINT40",
+            0x25, "UNIT48",
+            0x26, "UNIT56",
+            0x27, "UINT64",    
+            0x28, "INT8", 
+            0x29, "INT16", 
+            0x2a, "INT24", 
+            0x2b, "INT32",
+            0x2c, "INT40",
+            0x2d, "NIT48",
+            0x2e, "NIT56",
+            0x2f, "INT64", 
+            0x30, "ENUM8", 
+            0x31, "ENUM16", 
+            0x38, "SEMI", 
+            0x39, "SINGLE",
+            0x3a, "DOUBLE",   
+            0x41, "OCTSTR",   
+            0x42, "STRING",   
+            0x43, "OCTSTR16",
+            0x44, "STRING16", 
+            0x48, "ARRAY", 
+            0x4c, "STRUCT",
+            0x50, "SET",
+            0x51, "BAG",
+            0xe0, "ToD",
+            0xe1, "DATE",    
+            0xe2, "UTC", 
+            0xe8, "CLUSTERID", 
+            0xe9, "ATTRID", 
+            0xea, "BACOID",
+            0xf0, "EUI64",
+            0xf1, "KEY128",
+            0xff, "UNK"]
+    for i in range(0, len(m), 2):
+        if code == m[i]:
+            return m[i + 1]
+    return "OPAQUE"
+
+
+def getZCLAttributeSize(code):
+    m = [   0x00, 0,
+            0x08, 1,
+            0x09, 2,
+            0x0a, 3,
+            0x0b, 4,
+            0x0c, 5,
+            0x0d, 6,
+            0x0e, 7,
+            0x0f, 8,
+            0x10, 1,
+            0x18, 1,
+            0x19, 2,
+            0x1a, 3,
+            0x1b, 4,
+            0x1c, 5,
+            0x1d, 6,    
+            0x1e, 7, 
+            0x1f, 8,
+            0x20, 1, 
+            0x21, 2, 
+            0x22, 3, 
+            0x23, 4,
+            0x24, 5,
+            0x25, 6,
+            0x26, 7,
+            0x27, 8,    
+            0x28, 1, 
+            0x29, 3, 
+            0x2a, 3, 
+            0x2b, 4,
+            0x2c, 5,
+            0x2d, 6,
+            0x2e, 7,
+            0x2f, 8, 
+            0x30, 1, 
+            0x31, 2, 
+            0x38, 2,
+            0x38, 4, 
+            0x39, 8,   
+            0x41, -1,   
+            0x42, -1,   
+            0x43, -1,
+            0x44, -1, 
+            0x48, -1, 
+            0x4c, -1,
+            0x50, -1,
+            0x51, -1,
+            0xe0, 4,
+            0xe1, 4,    
+            0xe2, 4, 
+            0xe8, 2, 
+            0xe9, 2, 
+            0xea, 4,
+            0xf0, 8,
+            0xf1, 16,
+            0xff, 0]
+    for i in range(0, len(m), 2):
+        if code == m[i]:
+            return m[i + 1]
+    return -1
 
 
 def getHex(v,d):
