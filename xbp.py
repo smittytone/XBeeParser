@@ -55,6 +55,7 @@ ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP  = 0x16
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
+APP_VERSION = "0.0.1"
 
 # ZCL Global Commands
 zclCmds = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
@@ -64,7 +65,7 @@ zclCmds = ["Read Attributes", "Read Attributes Response", "Write Attributes", "W
 
 # Global App Variables
 escaped = True
-debug = True
+debug = False
 
 
 def processPacket(packet):
@@ -195,13 +196,33 @@ def decodeRemoteATCommand(data):
     print(padText("XBee Frame ID") + getHex(data[4],2))
     print(padText("XBee AT Command") + chr(data[15]) + chr(data[16]))
     read64bitAddress(data, 5)
-    print(padText("Address (16)") + getHex(((data[13] << 8) + data[14]),4))
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     getATStatus(data[17])
     ds = ""
     dv = []
     l = (data[1] << 8) + data[2] - 5
     if l > 0:
         for i in range(18, 18 + l):
+            ds = ds + getHex(data[i],2)
+            dv.append(data[i])
+        print(padText("Frame data") + ds)
+
+
+def decodeZigbeeReceivePacket(data):
+    # The Xbee has received an XBee remote AT response packet (frame ID 0x97)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    print(padText("XBee Command ID") + getHex(data[3],2))
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    getPacketStatus(data[14])
+    ds = ""
+    dv = []
+    l = (data[1] << 8) + data[2] - 12
+    if l > 0:
+        for i in range(15, 15 + l):
             ds = ds + getHex(data[i],2)
             dv.append(data[i])
         print(padText("Frame data") + ds)
@@ -225,7 +246,7 @@ def decodeZigbeeTransmitStatus(data):
     #   Nothing
     print(padText("XBee Command ID") + getHex(data[3],2))
     print(padText("XBee Frame ID") + getHex(data[4],2))
-    print(padText("Address (16)") + getHex(((data[5] << 8) + data[6]),4))
+    print(padText("Address (16-bit)") + getHex(((data[5] << 8) + data[6]),4))
     
     if data[7] == 0:
         print(padText("Retries") + "None")
@@ -244,7 +265,7 @@ def decodeZigbeeRXIndicator(data):
     #   Nothing
     print(padText("Frame command") + getHex(data[3],2))
     read64bitAddress(data, 4)
-    print(padText("Address (16)") + getHex(((data[12] << 8) + data[13]),4))
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
     print(padText("Source endpoint") + getHex(data[14],2))
     print(padText("Destination endpoint") + getHex(data[15],2))
     print(padText("ClusterID") + getHex(((data[16] << 8) + data[17]),4))
@@ -259,6 +280,17 @@ def decodeZigbeeRXIndicator(data):
             dv.append(data[i])
         print(padText("Frame data") + ds)
         decodeZCLFrame(dv)
+
+
+def decodeManyToOneRouteIndicator(data):
+    # The Xbee has received a many-to-one routing info packet (frame ID 0xA2)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    print(padText("Frame command") + getHex(data[3],2))
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
 
 
 def decodeZCLFrame(frameData):
@@ -395,9 +427,9 @@ def decodeZCLCommand(cmd, start, data):
                 i = i + 3
             if i >= len(data):
                 done = True
-            
 
 
+# Utility Functions
 
 def read64bitAddress(frameData, start = 4):
     # Reads the bytes representing a 64-bit address from the passed-in blob.
@@ -409,7 +441,7 @@ def read64bitAddress(frameData, start = 4):
     s = ""
     for i in range(start, start + 8):
         s = s + getHex(frameData[i], 2)
-    print(padText("Address (64)") + s)
+    print(padText("Address (64-bit)") + s)
 
 
 # Display status code messages
@@ -707,16 +739,79 @@ def padText(s,e=True):
     return t
 
 
+def showHelp():
+    print("ZigbeeParser version " + APP_VERSION + "\n")
+    print("Usage:")
+    print("  python xbp.py <XBee packet hex string>")
+    print("\nThe XBee packet string must not contains spaces.\n")
+    print("Options:")
+    print("  -e / --escape <true/false> - Use escaping when decoding packets")
+    print("  -d / --debug <true/false>  - Show extra debug information")
+    print("  -v / --version             - Show version information")
+    print("  -h / --help                - Show help information")
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':    
     if len(sys.argv) > 1:
-        processPacket(sys.argv[1])
+        # Run through the args to find options only
+        i = 1
+        done = False
+        while done is False:
+            c = sys.argv[i]
+            if c == "-v" or c == "--version":
+                # Print the version
+                print("ZigbeeParser version " + APP_VERSION)
+                i = i + 1
+            elif c == "-h" or c == "--help":
+                # Print help
+                showHelp()
+                i = i + 1
+            elif c == "-e" or c == "--escape":
+                # Are we escaping
+                if i < len(sys.argv) - 1:
+                    v = sys.argv[i + 1]
+                    if v == "true" or v == "yes" or v == "1":
+                        escaped = True
+                        print("Packet decoding will use escaping")
+                    elif v == "false" or v == "no" or v == "0":
+                        escaped = False
+                        print("Packet decoding will not use escaping")
+                    else:
+                        print("[ERROR] bad argument for -e/--escape: " + v)
+                        sys.exit(0)
+                    i = i + 2
+                else:
+                    print("[ERROR] missing argument for -e/--escape")
+                    sys.exit(0)
+            elif c == "-d" or c == "--debug":
+                # Are we escaping
+                if i < len(sys.argv) - 1:
+                    v = sys.argv[i + 1]
+                    if v == "true" or v == "yes" or v == "1":
+                        escaped = True
+                        print("Extra debugging information will be printed during decoding")
+                    elif v == "false" or v == "no" or v == "0":
+                        escaped = False
+                    else:
+                        print("[ERROR] bad argument for -d/--debug: " + v)
+                        sys.exit(0)
+                    i = i + 2
+                else:
+                    print("[ERROR] missing argument for -d/--debug")
+                    sys.exit(0)
+            else:
+                i = i + 1
+            if i >= len(sys.argv):
+                done = True
+        
+        # Run through the args to find the packet data and process it
+        # NOTE We do it this was so that we take into account options
+        #      placed after the packet
+        for i in range(1, len(sys.argv)):
+            c = sys.argv[i]
+            if len(c) > 8:
+                processPacket(c)
+                sys.exit(0)
     else:
         print("[ERROR] No Data provided")
-        processPacket("7e 00 17 91 00 17 88 01 01 92 07 60 cb d1 40 30 00 06 01 04 00 18 6f 0b 00 00 2b")
     sys.exit(0)
-
-
-
-
