@@ -477,7 +477,7 @@ def decodeZCLFrame(frameData):
     # Payload is at 'index' + 2
     if globalCmd is True:
         # Only decode global commands for now
-        decodeZCLCommand(ci, index, frameData)
+        decodeZCLCommand(ci, index + 2, frameData)
     else:
         ds = ""
         for i in range(index, len(frameData)):
@@ -494,11 +494,11 @@ def decodeZCLCommand(cmd, start, data):
         done = False
         i = start
         while done is False:
-            id = (data[i] << 8) + data[i + 1]
-            print(padText("  Attribute ID") + getHex(v,4))
-            print(padText("  Attribute Status") + getZCLAttributeStatus[data[i + 2]])
+            id = data[i] + (data[i + 1] << 8)
+            print(padText("  Attribute ID") + getHex(id,4))
+            print(padText("  Attribute Status") + getZCLAttributeStatus(data[i + 2]))
             if data[i + 2] == 0:
-                print(padText("  Attribute Type") + getZCLAttributeType[data[i + 3]])
+                print(padText("  Attribute Type") + getZCLAttributeType(data[i + 3]))
                 l = getZCLAttributeSize(data[i + 3])
                 if l != -1:
                     # The data is of a fixed size ('l')
