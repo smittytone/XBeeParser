@@ -210,9 +210,9 @@ def decodeSendATCommand(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Issue local AT command\"")
-    print(padText("XBee Frame ID") + getHex(data[4],2))
-    print(padText("XBee AT Command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Issue local AT command\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    print(padText("XBee AT command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
     
     ds = ""
     l = (data[1] << 8) + data[2] - 4
@@ -230,9 +230,9 @@ def decodeParamQueue(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Queue parameter value\"")
-    print(padText("XBee Frame ID") + getHex(data[4],2))
-    print(padText("XBee AT Command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Queue parameter value\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    print(padText("XBee AT command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
     
     ds = ""
     l = (data[1] << 8) + data[2] - 4
@@ -250,8 +250,8 @@ def decodeZigbeeTransitReq(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Zigbee transmit request\"")
-    print(padText("XBee Frame ID") + getHex(data[4],2))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Zigbee transmit request\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
     read64bitAddress(data, 5)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     print(padText("Radius") + getHex(data[15],2))
@@ -270,18 +270,18 @@ def decodeExplicitZigbeeCommand(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Send Zigbee packet\"")
-    print(padText("Frame ID") + getHex(data[4],2))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Send Zigbee packet\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
     read64bitAddress(data, 5)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     print(padText("Source endpoint") + getHex(data[15],2))
     print(padText("Destination endpoint") + getHex(data[16],2))
     
     cid = (data[17] << 8) + data[18]
-    print(padText("ClusterID") + getHex(cid,4))
+    print(padText("Cluster ID") + getHex(cid,4))
     
     pid = (data[19] << 8) + data[20]
-    print(padText("ProfileID") + getHex(pid,4))
+    print(padText("Profile ID") + getHex(pid,4))
     
     print(padText("Radius") + getHex(data[21],2))
     getSendOptions(data[22])
@@ -307,9 +307,9 @@ def decodeATResponse(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Local AT command response\"")
-    print(padText("XBee Frame ID") + getHex(data[4],2))
-    print(padText("XBee AT Command") + chr(data[5]) + chr(data[6]))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Local AT command response\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    print(padText("XBee AT command") + chr(data[5]) + chr(data[6]))
     getATStatus(data[7])
     ds = ""
     dv = []
@@ -327,9 +327,9 @@ def decodeRemoteATCommand(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Remote AT command response\"")
-    print(padText("XBee Frame ID") + getHex(data[4],2))
-    print(padText("XBee AT Command") + chr(data[15]) + chr(data[16]))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Remote AT command response\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
     read64bitAddress(data, 5)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     getATStatus(data[17])
@@ -349,7 +349,7 @@ def decodeModemStatus(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Modem status\"" )
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Modem status\"" )
     getModemStatus(data[4])
 
 
@@ -359,7 +359,7 @@ def decodeZigbeeReceivePacket(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Remote Zigbee response\"")
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Remote Zigbee response\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     getPacketStatus(data[14])
@@ -379,8 +379,8 @@ def decodeZigbeeTransmitStatus(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Zigbee transmit status\"")
-    print(padText("XBee Frame ID") + getHex(data[4],2))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Zigbee transmit status\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("Address (16-bit)") + getHex(((data[5] << 8) + data[6]),4))
     
     if data[7] == 0:
@@ -398,17 +398,17 @@ def decodeZigbeeRXIndicator(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("Frame command") + getHex(data[3],2))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Zigbee explicit RX indicator\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
     print(padText("Source endpoint") + getHex(data[14],2))
     print(padText("Destination endpoint") + getHex(data[15],2))
     
     cid = (data[16] << 8) + data[17]
-    print(padText("ClusterID") + getHex(cid,4))
+    print(padText("Cluster ID") + getHex(cid,4))
     
     pid = (data[18] << 8) + data[19]
-    print(padText("ProfileID") + getHex(pid,4))
+    print(padText("Profile ID") + getHex(pid,4))
     
     getPacketStatus(data[20])
     
@@ -433,7 +433,7 @@ def decodeManyToOneRouteIndicator(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("Frame command") + getHex(data[3],2))
+    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Many-to-one route request indicator\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
 
@@ -477,9 +477,9 @@ def decodeZCLFrame(frameData):
         print(SPACE_STRING[0:TEXT_SIZE] + "  Command is global to ZCL")
 
     if fc & 0x08 == 0:
-        print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: Client to Server")
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: client to server")
     else:
-        print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: Server to Client")
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: server to client")
 
     if fc & 0x04 == 0x04:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Manufacturer-specific commands in data")
@@ -488,9 +488,9 @@ def decodeZCLFrame(frameData):
         print(SPACE_STRING[0:TEXT_SIZE] + "  No manufacturer-specific commands in data")
 
     if fc & 0x10 == 0x10:
-        print(SPACE_STRING[0:TEXT_SIZE] + "  Default Response disabled")
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Default response disabled")
     else:
-        print(SPACE_STRING[0:TEXT_SIZE] + "  Default Response enabled")
+        print(SPACE_STRING[0:TEXT_SIZE] + "  Default response enabled")
     
     index = 1
     if manSpec is True:
@@ -502,12 +502,12 @@ def decodeZCLFrame(frameData):
     tr = frameData[index]
     ci = frameData[index + 1]
 
-    print(padText("  Transaction Number") + getHex(tr,2))
+    print(padText("  Transaction seq. number") + getHex(tr,2))
     
     if fc & 0x01 == 0:
-        print(padText("  Global Command") + getHex(ci,2) + " - " + zclCmds[ci])
+        print(padText("  Global command") + getHex(ci,2) + " - " + zclCmds[ci])
     else:
-        print(padText("  Cluster Command") + getHex(ci,2))
+        print(padText("  Cluster command") + getHex(ci,2))
 
     # Payload is at 'index' + 2
     if globalCmd is True:
@@ -545,9 +545,9 @@ def decodeZCLReadAttRsp(start, data):
     while done is False:
         id = data[i] + (data[i + 1] << 8)
         print(padText("  Attribute ID") + getHex(id,4))
-        print(padText("  Attribute Status") + getZCLAttributeStatus(data[i + 2]))
+        print(padText("  Attribute status") + getZCLAttributeStatus(data[i + 2]))
         if data[i + 2] == 0:
-            print(padText("  Attribute Type") + getZCLAttributeType(data[i + 3]))
+            print(padText("  Attribute type") + getZCLAttributeType(data[i + 3]))
             l = getZCLAttributeSize(data[i + 3])
             if l != -1:
                 # The data is of a fixed size ('l')
@@ -558,7 +558,7 @@ def decodeZCLReadAttRsp(start, data):
                         s = "FALSE"
                     else:
                         s = "TRUE"
-                    print(padText("  Attribute Value") + s)
+                    print(padText("  Attribute value") + s)
                     i = i + 5  
                 else:  
                     # Handle all other numeric values
@@ -568,25 +568,25 @@ def decodeZCLReadAttRsp(start, data):
                     for j in range(i, i - l, -1):
                         v = v + (data[j] << k)
                         k = k + 8
-                    print(padText("  Attribute Value") + getHex(v,l))
+                    print(padText("  Attribute value") + getHex(v,l))
             else:
                 if data[i + 3] == 0x41 or data[i + 3] == 0x42:
                     l = data[i + 4]
                     ds = ""
                     for j in range(i + 5, i + 5 + l):
                         ds = ds + chr(data[j])
-                    print(padText("  Attribute Value") + ds)
+                    print(padText("  Attribute value") + ds)
                     i = i + 4 + l
                 elif data[i + 3] == 0x43 or data[i + 3] == 0x44:
                     l = (data[i + 4] << 8) + data[i + 5]
                     ds = ""
                     for j in range(i + 6, i + 6 + l):
                         ds = ds + chr(data[j])
-                    print(padText("  Attribute Value") + ds)
+                    print(padText("  Attribute value") + ds)
                     i = i + 5 + l
                 else:
                     # TODO
-                    print(padText("  Attribute Value") + "TBD")
+                    print(padText("  Attribute value") + "TBD")
                     i = i + 3
         else:
             # Attribute access unsuccessful
@@ -596,7 +596,7 @@ def decodeZCLReadAttRsp(start, data):
 
 
 def decodeZDO(data, cmd):
-    print(padText("  Transaction Number") + getHex(data[0],2))
+    print(padText("  Transaction seq. number") + getHex(data[0],2))
     getZDOCommand(cmd)
 
     if cmd == 0x0000:
@@ -605,7 +605,7 @@ def decodeZDO(data, cmd):
         getZDOType(data[9])
         if data[9] == 0x01:
             # Type value indicates an extended device response requested
-            print(padText("  Start Index") + getHex(data[10]))
+            print(padText("  Start index") + getHex(data[10]))
     elif cmd == 0x8000:
         # Network Address Response
         getZDOStatus(data[1])
@@ -613,7 +613,7 @@ def decodeZDO(data, cmd):
         print(padText("  Address (16-bit)") + getHex(data[10] + (data[11] << 8),4))
         if len(data) > 12:
             print(padText("  No. of addresses") + getHex(data[12],2))
-            print(padText("  Start Index") + getHex(data[13],2))
+            print(padText("  Start index") + getHex(data[13],2))
             count = 1
             for i in range(14,14  + data[12] * 2,2):
                 print(padText("  Address" + str(count)) + getHex((data[i] << 8) + data[i + 1],4))
