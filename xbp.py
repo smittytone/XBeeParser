@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 
-# Imports
+##########################################################################
+# Program library imports                                                #
+##########################################################################
+
 import sys, math
 
-# 'Constants'
+##########################################################################
+# Constants covering key XBee and Zigbee commands, data types, etc.      #
+##########################################################################
+
 # XBee Request Commands
 XBEE_CMD_AT                                 = 0x08
 XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09
@@ -51,6 +57,10 @@ ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14
 ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ            = 0x15
 ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16
 
+##########################################################################
+# Application-specific constants                                         #
+##########################################################################
+
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
@@ -62,13 +72,26 @@ zclCmds = ["Read Attributes", "Read Attributes Response", "Write Attributes", "W
            "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
            "Discover Attributes", "Discover Attributes Response"]
 
-# Global App Variables
+
+##########################################################################
+# Application globals                                                    #
+##########################################################################
+
 escaped = True
 debug = False
 
 
+##########################################################################
+# Packet-processing entry point                                          #
+##########################################################################
+
 def processPacket(packet):
     # Process a string of hex bytes received or sent via an XBee
+    # Parameters:
+    #   1. String - the packet data as a hexadecimal string as passed in via
+    #               the command line
+    # Returns:
+    #   Nothing
     global escaped
 
     # Convert hex string to upper case
@@ -89,7 +112,8 @@ def processPacket(packet):
     if debug is True:
         print(packet)
     
-    # Does the data contain an even number of characters?
+    # Does the data contain an even number of characters? It should
+    # TODO Should this just pad the end with 0?
     if len(packet) % 2 != 0:
         print("[ERROR] Packet data does not contain an even number of characters")
         return
@@ -97,7 +121,7 @@ def processPacket(packet):
     # Convert each pair of characters (which represent a single byte)
     # to integer values in an array
     # NOTE 'escaped' indicates whether the packet contains escaped
-    #      characters
+    #      characters, an XBee feature
     values = []
     done = False
     escapeNextChar = False
@@ -175,6 +199,10 @@ def processPacket(packet):
         print("[ERROR] Unknown frame type: " + getHex(values[3],2))
         return
 
+
+##########################################################################
+# This section comprises starting points for specific XBee packet types. #
+##########################################################################
 
 def decodeSendATCommand(data):
     # The Xbee is sending an XBee AT command packet (frame ID 0x08)
@@ -410,6 +438,12 @@ def decodeManyToOneRouteIndicator(data):
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
 
 
+###########################################################################
+# This section comprises decoders for Zigbee data sent or received via an #
+# XBee. This covers Zigbee Cluster Library (ZCL) frames, and Zigbee       #
+# Device Objects (ZDO) entities
+##########################################################################
+
 def decodeZCLFrame(frameData):
     # Parameters:
     #   1. Array - the packet data as a collection of integers
@@ -421,8 +455,8 @@ def decodeZCLFrame(frameData):
     manSpec = False
     globalCmd = True
 
+    # Decode and display the frame control byte
     fc = frameData[0]
-
     fcs = ""
     for i in range(0,8):
         if i == 1 or i > 4:
@@ -464,6 +498,7 @@ def decodeZCLFrame(frameData):
         print(padText("  Manufacturer code") + getHex(mc,4))
         index = 5
     
+    # Decode and display the ZCL frame header's remaining two bytes
     tr = frameData[index]
     ci = frameData[index + 1]
 
@@ -479,6 +514,7 @@ def decodeZCLFrame(frameData):
         # Only decode global commands for now
         decodeZCLCommand(ci, index + 2, frameData)
     else:
+        # Dump the data, which contains Cluster-specific info
         ds = ""
         for i in range(index, len(frameData)):
             ds = ds + getHex(frameData[i],2)
@@ -486,64 +522,77 @@ def decodeZCLFrame(frameData):
 
 
 def decodeZCLCommand(cmd, start, data):
+    # Jump table for general ZCL commands
     if cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
-        for i in range(start, len(data), 2):
-            v = (data[i] << 8) + data[i + 1]
-            print(padText("  Attribute ID") + getHex(v,4))
+        decodeZCLReadAttReq(start, data)
     elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP:
-        done = False
-        i = start
-        while done is False:
-            id = data[i] + (data[i + 1] << 8)
-            print(padText("  Attribute ID") + getHex(id,4))
-            print(padText("  Attribute Status") + getZCLAttributeStatus(data[i + 2]))
-            if data[i + 2] == 0:
-                print(padText("  Attribute Type") + getZCLAttributeType(data[i + 3]))
-                l = getZCLAttributeSize(data[i + 3])
-                if l != -1:
-                    # The data is of a fixed size ('l')
-                    if data[i + 3] == 0x10:
-                        # Handle Boolean values separately
-                        s = "FORBIDDEN"
-                        if data[i + 4] == 0x00:
-                            s = "FALSE"
-                        else:
-                            s = "TRUE"
-                        print(padText("  Attribute Value") + s)
-                        i = i + 5  
-                    else:   
-                        # Handle all other numeric values
-                        i = i + 4 + l
-                        v = 0
-                        k = 0
-                        for j in range(i, i - l, -1):
-                            v = v + (data[j] << k)
-                            k = k + 8
-                        print(padText("  Attribute Value") + getHex(v,l))
-                else:
-                    if data[i + 3] == 0x41 or data[i + 3] == 0x42:
-                        l = data[i + 4]
-                        ds = ""
-                        for j in range(i + 5, i + 5 + l):
-                            ds = ds + chr(data[j])
-                        print(padText("  Attribute Value") + ds)
-                        i = i + 4 + l
-                    elif data[i + 3] == 0x43 or data[i + 3] == 0x44:
-                        l = (data[i + 4] << 8) + data[i + 5]
-                        ds = ""
-                        for j in range(i + 6, i + 6 + l):
-                            ds = ds + chr(data[j])
-                        print(padText("  Attribute Value") + ds)
-                        i = i + 5 + l
+        decodeZCLReadAttRsp(start, data)
+    elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_REQ:
+        decodeZCLWriteAttReq(start, data)
+    elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
+        decodeZCLWriteAttRsp(start, data)
+
+
+def decodeZCLReadAtts(start, data):
+    for i in range(start, len(data), 2):
+        v = (data[i] << 8) + data[i + 1]
+        print(padText("  Attribute ID") + getHex(v,4))
+
+
+def decodeZCLReadAttRsp(start, data):
+    i = start
+    done = False
+    while done is False:
+        id = data[i] + (data[i + 1] << 8)
+        print(padText("  Attribute ID") + getHex(id,4))
+        print(padText("  Attribute Status") + getZCLAttributeStatus(data[i + 2]))
+        if data[i + 2] == 0:
+            print(padText("  Attribute Type") + getZCLAttributeType(data[i + 3]))
+            l = getZCLAttributeSize(data[i + 3])
+            if l != -1:
+                # The data is of a fixed size ('l')
+                if data[i + 3] == 0x10:
+                    # Handle Boolean values separately
+                    s = "FORBIDDEN"
+                    if data[i + 4] == 0x00:
+                        s = "FALSE"
                     else:
-                        # TODO
-                        print(padText("  Attribute Value") + "TBD")
-                        i = i + 3
+                        s = "TRUE"
+                    print(padText("  Attribute Value") + s)
+                    i = i + 5  
+                else:  
+                    # Handle all other numeric values
+                    i = i + 4 + l
+                    v = 0
+                    k = 0
+                    for j in range(i, i - l, -1):
+                        v = v + (data[j] << k)
+                        k = k + 8
+                    print(padText("  Attribute Value") + getHex(v,l))
             else:
-                # Attribute access unsuccessful
-                i = i + 3
-            if i >= len(data):
-                done = True
+                if data[i + 3] == 0x41 or data[i + 3] == 0x42:
+                    l = data[i + 4]
+                    ds = ""
+                    for j in range(i + 5, i + 5 + l):
+                        ds = ds + chr(data[j])
+                    print(padText("  Attribute Value") + ds)
+                    i = i + 4 + l
+                elif data[i + 3] == 0x43 or data[i + 3] == 0x44:
+                    l = (data[i + 4] << 8) + data[i + 5]
+                    ds = ""
+                    for j in range(i + 6, i + 6 + l):
+                        ds = ds + chr(data[j])
+                    print(padText("  Attribute Value") + ds)
+                    i = i + 5 + l
+                else:
+                    # TODO
+                    print(padText("  Attribute Value") + "TBD")
+                    i = i + 3
+        else:
+            # Attribute access unsuccessful
+            i = i + 3
+        if i >= len(data):
+            done = True
 
 
 def decodeZDO(data, cmd):
@@ -570,7 +619,10 @@ def decodeZDO(data, cmd):
                 print(padText("  Address" + str(count)) + getHex((data[i] << 8) + data[i + 1],4))
 
 
-# Utility Functions
+###########################################################################
+# This section comprises utility functions used by the primary decoders   #
+# listed above.                                                           #
+###########################################################################
 
 def read64bitAddress(frameData, start = 4):
     # Reads the bytes representing a 64-bit address from the passed-in blob.
@@ -586,16 +638,24 @@ def read64bitAddress(frameData, start = 4):
 
 
 def read64bitSserdda(frameData, start = 4):
-    # As above, but in little endian order
+    # As read64bitAddress(), but returning the address in little endian order
     s = ""
     for i in range(start + 7, start - 1, -1):
         s = s + getHex(frameData[i], 2)
     print(padText("  Address (64-bit)") + s)
 
 
-# Display status code messages
+###########################################################################
+# This section comprises XBee and Zigbee enumeration decoders used by the #
+# primary decoders  listed above.                                         #
+###########################################################################
 
 def getSendOptions(code):
+    # Decode a Zigbee packet Send options byte and print a relevant status message
+    # Parameters:
+    #   1. Integer - the status code included in the packet
+    # Returns:
+    #   Nothing
     os = ""
     if code & 0x01 == 0x01:
         os = os + "Disable retries and route repair, "
@@ -612,7 +672,7 @@ def getSendOptions(code):
 
 
 def getATStatus(code):
-    # Decode an AT command status packet's status byte and print the relevant status message
+    # Decode an AT command status packet's status byte and print a relevant status message
     # Parameters:
     #   1. Integer - the status code included in the packet
     # Returns:
@@ -622,7 +682,7 @@ def getATStatus(code):
 
 
 def getModemStatus(code):
-    # Decode a modem status packet's status byte and print the relevant status message
+    # Decode a modem status packet's status byte and print a relevant status message
     # Parameters:
     #   1. Integer - the status code included in the packet
     # Returns:
@@ -913,6 +973,11 @@ def getZDOStatus(code):
     print(padText("  Response status") + getZCLAttributeStatus(code))
 
 
+###########################################################################
+# This section comprises generic utility functions used by all parts of   #
+# the program                                                             #
+###########################################################################
+
 def getHex(v,d):
     # Convert the integer 'v' to a hex string of 'd' characters
     # prefix-padding as required
@@ -951,6 +1016,11 @@ def showHelp():
     print("  -v / --version             - Show version information")
     print("  -h / --help                - Show help information")
 
+
+###########################################################################
+# The main entry point. Here we decode the options (if any) selected by   #
+# the user, and the Xbee packet data provided via the command line        #
+###########################################################################
 
 if __name__ == '__main__':    
     if len(sys.argv) > 1:
