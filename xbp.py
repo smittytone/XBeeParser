@@ -5,52 +5,51 @@ import sys, math
 
 # 'Constants'
 # XBee Request Commands
-XBEE_CMD_AT                        = 0x08
-XBEE_CMD_QUEUE_PARAM_VALUE         = 0x09
-XBEE_CMD_ZIGBEE_TRANSMIT_REQ       = 0x10
-XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME = 0x11
-XBEE_CMD_REMOTE_CMD_REQ            = 0x17
-XBEE_CMD_CREATE_SOURCE_ROUTE       = 0x21
+XBEE_CMD_AT                                 = 0x08
+XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09
+XBEE_CMD_ZIGBEE_TRANSMIT_REQ                = 0x10
+XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME          = 0x11
+XBEE_CMD_REMOTE_CMD_REQ                     = 0x17
+XBEE_CMD_CREATE_SOURCE_ROUTE                = 0x21
 
 # XBee Response Frame IDs
-XBEE_CMD_AT_RESPONSE = 0x88
-XBEE_CMD_MODEM_STATUS = 0x8A
-XBEE_CMD_ZIGBEE_TRANSMIT_STATUS = 0x8B
-XBEE_CMD_ZIGBEE_RECEIVE_PACKET = 0x90
-XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR = 0x91
+XBEE_CMD_AT_RESPONSE                        = 0x88
+XBEE_CMD_MODEM_STATUS                       = 0x8A
+XBEE_CMD_ZIGBEE_TRANSMIT_STATUS             = 0x8B
+XBEE_CMD_ZIGBEE_RECEIVE_PACKET              = 0x90
+XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR            = 0x91
 XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92
-XBEE_CMD_XBEE_SENSOR_READ_INDICATOR = 0x94
-XBEE_CMD_NODE_ID_INDICATOR = 0x95
-XBEE_CMD_REMOTE_CMD_RESPONSE = 0x97
-XBEE_CMD_ROUTE_RECORD_INDICATOR = 0xA1
-XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR = 0xA2
-# NOT YET SUPPORTED
-XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS = 0xA0
+XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94
+XBEE_CMD_NODE_ID_INDICATOR                  = 0x95
+XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97
+XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1
+XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA2
+XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0
 
 # ZCL Global Commands
-ZCL_GLOBAL_CMD_READ_ATTR_REQ      = 0x00
-ZCL_GLOBAL_CMD_READ_ATTR_RSP      = 0x01
-ZCL_GLOBAL_CMD_WRITE_ATTR_REQ     = 0x02
-ZCL_GLOBAL_CMD_WRITE_ATTR_UND     = 0x03
-ZCL_GLOBAL_CMD_WRITE_ATTR_RSP     = 0x04
-ZCL_GLOBAL_CMD_WRITE_ATTR_NO      = 0x05
-ZCL_GLOBAL_CMD_CONF_REPT_REQ      = 0x06
-ZCL_GLOBAL_CMD_CONF_REPT_RSP      = 0x07
-ZCL_GLOBAL_CMD_READ_REPT_REQ      = 0x08
-ZCL_GLOBAL_CMD_READ_REPT_RSP      = 0x09
-ZCL_GLOBAL_CMD_REPT_ATTR          = 0x0A
-ZCL_GLOBAL_CMD_DEFAULT_RSP        = 0x0B
-ZCL_GLOBAL_CMD_DISC_ATTR_REQ      = 0x0C
-ZCL_GLOBAL_CMD_DISC_ATTR_RSP      = 0x0D
-ZCL_GLOBAL_CMD_READ_ATTR_STR_REQ  = 0x0E
-ZCL_GLOBAL_CMD_WRITE_ATTR_STR_REQ = 0x0F
-ZCL_GLOBAL_CMD_WRITE_ATTR_STR_RSP = 0x10
-ZCL_GLOBAL_CMD_DISC_RCMDS_REQ     = 0x11
-ZCL_GLOBAL_CMD_DISC_RCMDS_RSP     = 0x12
-ZCL_GLOBAL_CMD_DISC_GCMDS_REQ     = 0x13
-ZCL_GLOBAL_CMD_DISC_GCMDS_RSP     = 0x14
-ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ  = 0x15
-ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP  = 0x16
+ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00
+ZCL_GLOBAL_CMD_READ_ATTR_RSP                = 0x01
+ZCL_GLOBAL_CMD_WRITE_ATTR_REQ               = 0x02
+ZCL_GLOBAL_CMD_WRITE_ATTR_UND               = 0x03
+ZCL_GLOBAL_CMD_WRITE_ATTR_RSP               = 0x04
+ZCL_GLOBAL_CMD_WRITE_ATTR_NO                = 0x05
+ZCL_GLOBAL_CMD_CONF_REPT_REQ                = 0x06
+ZCL_GLOBAL_CMD_CONF_REPT_RSP                = 0x07
+ZCL_GLOBAL_CMD_READ_REPT_REQ                = 0x08
+ZCL_GLOBAL_CMD_READ_REPT_RSP                = 0x09
+ZCL_GLOBAL_CMD_REPT_ATTR                    = 0x0A
+ZCL_GLOBAL_CMD_DEFAULT_RSP                  = 0x0B
+ZCL_GLOBAL_CMD_DISC_ATTR_REQ                = 0x0C
+ZCL_GLOBAL_CMD_DISC_ATTR_RSP                = 0x0D
+ZCL_GLOBAL_CMD_READ_ATTR_STR_REQ            = 0x0E
+ZCL_GLOBAL_CMD_WRITE_ATTR_STR_REQ           = 0x0F
+ZCL_GLOBAL_CMD_WRITE_ATTR_STR_RSP           = 0x10
+ZCL_GLOBAL_CMD_DISC_RCMDS_REQ               = 0x11
+ZCL_GLOBAL_CMD_DISC_RCMDS_RSP               = 0x12
+ZCL_GLOBAL_CMD_DISC_GCMDS_REQ               = 0x13
+ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14
+ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ            = 0x15
+ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16
 
 # App Constants
 TEXT_SIZE = 30
@@ -139,40 +138,148 @@ def processPacket(packet):
     print(padText("Frame length") + str(length) + " bytes")
 
     # Look for XBee frame types and decode the data individually
-    if values[3] == XBEE_CMD_AT_RESPONSE:
-        decodeATResponse(values)
-    elif values[3] == XBEE_CMD_MODEM_STATUS:
-        decodeModemStatus(values)
-    elif values[3] == XBEE_CMD_ZIGBEE_TRANSMIT_STATUS:
-        decodeZigbeeTransmitStatus(values)
-    elif values[3] == XBEE_CMD_ZIGBEE_RECEIVE_PACKET:
-        decodeZigbeeReceivePacket(values)
-    elif values[3] == XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR:
-        decodeZigbeeRXIndicator(values)
-    elif values[3] == XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR:
+    cmd = values[3]
+    if cmd == XBEE_CMD_AT:
+        decodeSendATCommand(values) #DONE
+    elif cmd == XBEE_CMD_QUEUE_PARAM_VALUE:
+        decodeParamQueue(values) #DONE
+    elif cmd == XBEE_CMD_ZIGBEE_TRANSMIT_REQ:
+        decodeZigbeeTransitReq(values) #DONE
+    elif cmd == XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME:
+        decodeExplicitZigbeeCommand(values) #DONE
+    elif cmd == XBEE_CMD_REMOTE_CMD_REQ:
+        deviceRemoteCmdReq(values)
+    elif cmd == XBEE_CMD_AT_RESPONSE:
+        decodeATResponse(values) #DONE
+    elif cmd == XBEE_CMD_MODEM_STATUS:
+        decodeModemStatus(values) #DONE
+    elif cmd == XBEE_CMD_ZIGBEE_TRANSMIT_STATUS:
+        decodeZigbeeTransmitStatus(values) #DONE
+    elif cmd == XBEE_CMD_ZIGBEE_RECEIVE_PACKET:
+        decodeZigbeeReceivePacket(values) #DONE
+    elif cmd == XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR:
+        decodeZigbeeRXIndicator(values) #DONE
+    elif cmd == XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR:
         decodeZigbeeDataSampleRXIndicator(values)
-    elif values[3] == XBEE_CMD_XBEE_SENSOR_READ_INDICATOR:
+    elif cmd == XBEE_CMD_XBEE_SENSOR_READ_INDICATOR:
         decodeXBeeSensorReadIndicator(values)
-    elif values[3] == XBEE_CMD_NODE_ID_INDICATOR:
+    elif cmd == XBEE_CMD_NODE_ID_INDICATOR:
         decodeNodeIDIndicator(values)
-    elif values[3] == XBEE_CMD_REMOTE_CMD_RESPONSE:
-        decodeRemoteATCommand(values)
-    elif values[3] == XBEE_CMD_ROUTE_RECORD_INDICATOR:
+    elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
+        decodeRemoteATCommand(values) #DONE
+    elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
         decodeRouteRecordIndicator(values)
-    elif values[3] == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
-        decodeManyToOneRouteIndicator(values)
+    elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
+        decodeManyToOneRouteIndicator(values) #DONE
     else:
-        print("[ERROR] Unknown frame type")
+        print("[ERROR] Unknown frame type: " + getHex(values[3],2))
         return
 
 
+def decodeSendATCommand(data):
+    # The Xbee is sending an XBee AT command packet (frame ID 0x08)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Issue local AT command\"")
+    print(padText("XBee Frame ID") + getHex(data[4],2))
+    print(padText("XBee AT Command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
+    
+    ds = ""
+    l = (data[1] << 8) + data[2] - 4
+    if l > 0:
+        for i in range(7, 7 + l):
+            ds = ds + getHex(data[i],2)
+    else:
+        ds = "None"
+    print(padText("Command parameter value") + ds)
+
+
+def decodeParamQueue(data):
+    # The Xbee is queing an XBee AT command packet (frame ID 0x09)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Queue parameter value\"")
+    print(padText("XBee Frame ID") + getHex(data[4],2))
+    print(padText("XBee AT Command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
+    
+    ds = ""
+    l = (data[1] << 8) + data[2] - 4
+    if l > 0:
+        for i in range(7, 7 + l):
+            ds = ds + getHex(data[i],2)
+    else:
+        ds = "Read queued"
+    print(padText("Command parameter value") + ds)
+
+
+def decodeZigbeeTransitReq(data):
+    # The Xbee has issues a basic Zigbee command (frame ID 0x10)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Zigbee transmit request\"")
+    print(padText("XBee Frame ID") + getHex(data[4],2))
+    read64bitAddress(data, 5)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    print(padText("Radius") + getHex(data[15],2))
+    getSendOptions(data[16])
+    ds = ""
+    l = (data[1] << 8) + data[2] - 14
+    if l > 0:
+        for i in range(17, 17 + l):
+            ds = ds + getHex(data[i],2)
+        print(padText("Data bytes (" + str(l) + ")") + ds)
+
+
+def decodeExplicitZigbeeCommand(data):
+    # The Xbee has received a many-to-one routing info packet (frame ID 0xA2)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Send Zigbee packet\"")
+    print(padText("Frame ID") + getHex(data[4],2))
+    read64bitAddress(data, 5)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    print(padText("Source endpoint") + getHex(data[15],2))
+    print(padText("Destination endpoint") + getHex(data[16],2))
+    
+    cid = (data[17] << 8) + data[18]
+    print(padText("ClusterID") + getHex(cid,4))
+    
+    pid = (data[19] << 8) + data[20]
+    print(padText("ProfileID") + getHex(pid,4))
+    
+    print(padText("Radius") + getHex(data[21],2))
+    getSendOptions(data[22])
+    
+    ds = ""
+    dv = []
+    l = (data[1] << 8) + data[2] - 20
+    if l > 0:
+        for i in range(23, 23 + l):
+            ds = ds + getHex(data[i],2)
+            dv.append(data[i])
+        print(padText("Frame data") + ds)
+        if pid == 0x0000:
+            # ZDO operation
+            decodeZDO(dv, cid)
+        else:
+            decodeZCLFrame(dv)
+
+        
 def decodeATResponse(data):
     # The Xbee has received an XBee AT response packet (frame ID 0x88)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2))
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Local AT command response\"")
     print(padText("XBee Frame ID") + getHex(data[4],2))
     print(padText("XBee AT Command") + chr(data[5]) + chr(data[6]))
     getATStatus(data[7])
@@ -192,7 +299,7 @@ def decodeRemoteATCommand(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2))
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Remote AT command response\"")
     print(padText("XBee Frame ID") + getHex(data[4],2))
     print(padText("XBee AT Command") + chr(data[15]) + chr(data[16]))
     read64bitAddress(data, 5)
@@ -208,13 +315,23 @@ def decodeRemoteATCommand(data):
         print(padText("Frame data") + ds)
 
 
+def decodeModemStatus(data):
+    # The Xbee has received an XBee model status packet (frame ID 0x8A)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Modem status\"" )
+    getModemStatus(data[4])
+
+
 def decodeZigbeeReceivePacket(data):
     # The Xbee has received an XBee remote AT response packet (frame ID 0x97)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2))
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Remote Zigbee response\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     getPacketStatus(data[14])
@@ -228,23 +345,13 @@ def decodeZigbeeReceivePacket(data):
         print(padText("Frame data") + ds)
 
 
-def decodeModemStatus(data):
-    # The Xbee has received an XBee model status packet (frame ID 0x8A)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2))
-    getModemStatus(data[4])
-
-
 def decodeZigbeeTransmitStatus(data):
     # The Xbee has received an Zigbee transmit status packet (frame ID 0x8B)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee Command ID") + getHex(data[3],2))
+    print(padText("XBee Command ID") + getHex(data[3],2) + " - \"Zigbee transmit status\"")
     print(padText("XBee Frame ID") + getHex(data[4],2))
     print(padText("Address (16-bit)") + getHex(((data[5] << 8) + data[6]),4))
     
@@ -268,9 +375,15 @@ def decodeZigbeeRXIndicator(data):
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
     print(padText("Source endpoint") + getHex(data[14],2))
     print(padText("Destination endpoint") + getHex(data[15],2))
-    print(padText("ClusterID") + getHex(((data[16] << 8) + data[17]),4))
-    print(padText("ProfileID") + getHex(((data[18] << 8) + data[19]),4))
+    
+    cid = (data[16] << 8) + data[17]
+    print(padText("ClusterID") + getHex(cid,4))
+    
+    pid = (data[18] << 8) + data[19]
+    print(padText("ProfileID") + getHex(pid,4))
+    
     getPacketStatus(data[20])
+    
     ds = ""
     dv = []
     l = (data[1] << 8) + data[2] - 18
@@ -279,7 +392,11 @@ def decodeZigbeeRXIndicator(data):
             ds = ds + getHex(data[i],2)
             dv.append(data[i])
         print(padText("Frame data") + ds)
-        decodeZCLFrame(dv)
+        
+        if pid == 0x0000:
+            decodeZDO(dv, cid)
+        else:
+            decodeZCLFrame(dv)
 
 
 def decodeManyToOneRouteIndicator(data):
@@ -317,7 +434,7 @@ def decodeZCLFrame(frameData):
         else:
             fcs = "0" + fcs
 
-    print(padText("  Frame Control Byte") + getHex(fc,2) + " [" + fcs + "]")
+    print(padText("  Frame Control Byte") + getHex(fc,2) + " [b" + fcs + "]")
     
     if fc & 0x01 == 0x01:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Command is specific to cluster")
@@ -364,7 +481,7 @@ def decodeZCLFrame(frameData):
     else:
         ds = ""
         for i in range(index, len(frameData)):
-            ds = ds + getHex(data[i],2)
+            ds = ds + getHex(frameData[i],2)
         print(padText("  Data") + ds)
 
 
@@ -429,6 +546,30 @@ def decodeZCLCommand(cmd, start, data):
                 done = True
 
 
+def decodeZDO(data, cmd):
+    print(padText("  Transaction Number") + getHex(data[0],2))
+    getZDOCommand(cmd)
+
+    if cmd == 0x0000:
+        # Network Address Request
+        read64bitSserdda(data, 1)
+        getZDOType(data[9])
+        if data[9] == 0x01:
+            # Type value indicates an extended device response requested
+            print(padText("  Start Index") + getHex(data[10]))
+    elif cmd == 0x8000:
+        # Network Address Response
+        getZDOStatus(data[1])
+        read64bitSserdda(data, 2)
+        print(padText("  Address (16-bit)") + getHex(data[10] + (data[11] << 8),4))
+        if len(data) > 12:
+            print(padText("  No. of addresses") + getHex(data[12],2))
+            print(padText("  Start Index") + getHex(data[13],2))
+            count = 1
+            for i in range(14,14  + data[12] * 2,2):
+                print(padText("  Address" + str(count)) + getHex((data[i] << 8) + data[i + 1],4))
+
+
 # Utility Functions
 
 def read64bitAddress(frameData, start = 4):
@@ -444,7 +585,31 @@ def read64bitAddress(frameData, start = 4):
     print(padText("Address (64-bit)") + s)
 
 
+def read64bitSserdda(frameData, start = 4):
+    # As above, but in little endian order
+    s = ""
+    for i in range(start + 7, start - 1, -1):
+        s = s + getHex(frameData[i], 2)
+    print(padText("  Address (64-bit)") + s)
+
+
 # Display status code messages
+
+def getSendOptions(code):
+    os = ""
+    if code & 0x01 == 0x01:
+        os = os + "Disable retries and route repair, "
+    if code & 0x20 == 0x20:
+        os = os + "Enable APS encryption (if EE=1), "
+    if code & 0x40 == 0x40:
+        os = os + "Use the extended transmission timeout, "
+    l = len(os)
+    if l > 0:
+        os = os[0:l - 2]
+    else:
+        os = "None"
+    print(padText("Options") + os)
+
 
 def getATStatus(code):
     # Decode an AT command status packet's status byte and print the relevant status message
@@ -712,6 +877,42 @@ def getZCLAttributeSize(code):
     return -1
 
 
+def getZDOCommand(code):
+    m = [ "16-bit Address", 0x0000,
+          "64-bit Address", 0x0001,
+          "Node Descriptor", 0x0002,
+          "Simple Descriptor", 0x0004,
+          "Active Endpoints", 0x0005,
+          "Match Descriptor", 0x0006,
+          "Complex Descriptor", 0x0010,
+          "User Descriptor", 0x0011,
+          "User Descriptor Set", 0x0014,
+          "Management Network Discovery", 0x0030,
+          "Management LQI (Neighbor Table)", 0x0031,
+          "Management RTG (Routing Table)", 0x0032,
+          "Management Leave", 0x0034,
+          "Management Permit Join", 0x0036,
+          "Management Network Update", 0x0038 ]
+    for i in range(0, len(m), 2):
+        if code == m[i + 1]:
+            if code > 0x8000:
+                return (m[i] + " Response")
+            else:
+                return (m[i] + " Request")
+    return "Unknown ZDO command"
+
+
+def getZDOType(code):
+    if code == 0x00:
+        print(padText("  Request type") + "Single device response")
+    else:
+        print(padText("  Request type") + "Extended response")
+
+
+def getZDOStatus(code):
+    print(padText("  Response status") + getZCLAttributeStatus(code))
+
+
 def getHex(v,d):
     # Convert the integer 'v' to a hex string of 'd' characters
     # prefix-padding as required
@@ -755,6 +956,7 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         # Run through the args to find options only
         i = 1
+        fs = ""
         done = False
         while done is False:
             c = sys.argv[i]
@@ -799,6 +1001,10 @@ if __name__ == '__main__':
                 else:
                     print("[ERROR] missing argument for -d/--debug")
                     sys.exit(0)
+            elif c[0] == "-":
+                # Mis-formed option
+                print("[ERROR] unrecognized option: " + c)
+                sys.exit(0)
             else:
                 i = i + 1
             if i >= len(sys.argv):
@@ -809,9 +1015,11 @@ if __name__ == '__main__':
         #      placed after the packet
         for i in range(1, len(sys.argv)):
             c = sys.argv[i]
-            if len(c) > 8:
-                processPacket(c)
-                sys.exit(0)
+            if c[0] != "-":
+                fs = fs + c
+        if len(fs) > 8:
+            # Frame has to have at least four octets
+            processPacket(fs)
     else:
         print("[ERROR] No Data provided")
     sys.exit(0)
