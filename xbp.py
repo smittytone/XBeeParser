@@ -190,7 +190,7 @@ def processPacket(packet):
     elif cmd == XBEE_CMD_XBEE_SENSOR_READ_INDICATOR:
         decodeXBeeSensorReadIndicator(values) #DONE
     elif cmd == XBEE_CMD_NODE_ID_INDICATOR:
-        decodeNodeIDIndicator(values)
+        decodeNodeIDIndicator(values) #DONE
     elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
         decodeRemoteATCommand(values) #DONE
     elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
@@ -484,7 +484,7 @@ def decodeZigbeeDataSampleRXIndicator(data):
 
 
 def decodeXBeeSensorReadIndicator(data):
-    # The Xbee has received an XBee sensor read response (frame ID 0x93)
+    # The Xbee has received an XBee sensor read response (frame ID 0x94)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
@@ -493,7 +493,7 @@ def decodeXBeeSensorReadIndicator(data):
     print(padText("XBee command ID") + getHex(data[3],2) + " \"XBee sensor read indicator response\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
-    getSendOptions(data[14])
+    getPacketStatus(data[14])
     getOneWireStatus(data[15])
     
     # Read the sensor data
@@ -519,6 +519,43 @@ def decodeXBeeSensorReadIndicator(data):
         print("No thermometer found")
     else:
         print(padText("Thermometer reading") + getHex(a,4))
+
+
+def decodeNodeIDIndicator(data):
+    # The Xbee has received an XBee remote AT response packet (frame ID 0x95)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Node identification indicator response\"")
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    getPacketStatus(data[14])
+    print(padText("Address (16-bit)") + getHex(((data[15] << 8) + data[16]),4))
+    read64bitAddress(data, 17)
+
+    l = (data[1] << 8) + data[2] - 25
+    index = 25
+    nis = ""
+    for i in range(25, 25+l):
+        if data[i] != 0x00:
+            nis = nis + chr(data[i])
+        else:
+            index = i + 1
+            break
+    if len(nis) > 0 and nis[0] != " ":
+        print(padText("NI string") + nis)
+    else:
+        print(padText("NI string") + "Default")
+
+    print(padText("Parent address (16-bit)") + getHex(((data[index] << 8) + data[index + 1]),4))
+    
+    getDeviceType(data[index + 2])
+    getSourceEvent(data[index + 3])
+
+    print(padText("Digi Profile ID") + getHex(((data[index + 4] << 8) + data[index + 5]),4))
+    print(padText("Manufacturer ID") + getHex(((data[index + 6] << 8) + data[index + 7]),4))
 
 
 def decodeRemoteATCommand(data):
@@ -1172,6 +1209,26 @@ def getOneWireStatus(code):
             es = es + m[i] + ", "
     es = es[0:len(es)-2]
     print(padText("OneWire sensor status") + es)
+
+
+def getDeviceType(code):
+    # Determine the device type embedded in a Node Ident packet
+
+    m = ["Coordinator", "Router", "End Device"]
+    if code < 0 or code > 2:
+        print("[ERROR] mis-set device type " + str(code))
+    else:
+        print(padText("Device type") + m[code])
+
+
+def getSourceEvent(code):
+    # Determine the device type embedded in a Node Ident packet
+
+    m = ["Pushbutton", "Joining", "Power-cycle"]
+    if code < 1 or code > 3:
+        print("[ERROR] mis-set event type " + str(code))
+    else:
+        print(padText("Source event") + m[code - 1])
 
 
 ###########################################################################
