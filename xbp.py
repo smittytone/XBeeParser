@@ -1290,7 +1290,7 @@ if __name__ == '__main__':
             c = sys.argv[i]
             if c == "-v" or c == "--version":
                 # Print the version
-                print("ZigbeeParser version " + APP_VERSION)
+                print("XBeeParser version " + APP_VERSION)
                 i = i + 1
             elif c == "-h" or c == "--help":
                 # Print help
