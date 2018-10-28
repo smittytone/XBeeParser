@@ -166,13 +166,15 @@ def processPacket(packet):
     if cmd == XBEE_CMD_AT:
         decodeSendATCommand(values) #DONE
     elif cmd == XBEE_CMD_QUEUE_PARAM_VALUE:
-        decodeParamQueue(values) #DONE
+        decodeParamQueueRequest(values) #DONE
     elif cmd == XBEE_CMD_ZIGBEE_TRANSMIT_REQ:
-        decodeZigbeeTransitReq(values) #DONE
+        decodeZigbeeTransitRequest(values) #DONE
     elif cmd == XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME:
-        decodeExplicitZigbeeCommand(values) #DONE
+        decodeExplicitZigbeeCmdRequest(values) #DONE
     elif cmd == XBEE_CMD_REMOTE_CMD_REQ:
-        deviceRemoteCmdReq(values)
+        decodeRemoteCmdRequest(values) #DONE
+    elif cmd == XBEE_CMD_CREATE_SOURCE_ROUTE:
+        decodeCreateSourceRouteRequest(values) #DONE
     elif cmd == XBEE_CMD_AT_RESPONSE:
         decodeATResponse(values) #DONE
     elif cmd == XBEE_CMD_MODEM_STATUS:
@@ -184,9 +186,9 @@ def processPacket(packet):
     elif cmd == XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR:
         decodeZigbeeRXIndicator(values) #DONE
     elif cmd == XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR:
-        decodeZigbeeDataSampleRXIndicator(values)
+        decodeZigbeeDataSampleRXIndicator(values) #DONE
     elif cmd == XBEE_CMD_XBEE_SENSOR_READ_INDICATOR:
-        decodeXBeeSensorReadIndicator(values)
+        decodeXBeeSensorReadIndicator(values) #DONE
     elif cmd == XBEE_CMD_NODE_ID_INDICATOR:
         decodeNodeIDIndicator(values)
     elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
@@ -210,47 +212,48 @@ def decodeSendATCommand(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Issue local AT command\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    print(padText("XBee AT command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
-    
-    ds = ""
-    l = (data[1] << 8) + data[2] - 4
-    if l > 0:
-        for i in range(7, 7 + l):
-            ds = ds + getHex(data[i],2)
-    else:
-        ds = "None"
-    print(padText("Command parameter value") + ds)
+
+    decodeATCommon(data, "Issue local AT command", "None")
 
 
-def decodeParamQueue(data):
+def decodeParamQueueRequest(data):
     # The Xbee is queing an XBee AT command packet (frame ID 0x09)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Queue parameter value\"")
+
+    decodeATCommon(data, "queue AT command parameter value", "Read queued")
+
+
+def decodeATCommon(data, commandInfo, noParamMessage):
+    # Code common to both of the above calls
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"" + commandInfo + "\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("XBee AT command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
-    
+    decodeATParamCommon(data, 7, 4, noParamMessage)
+
+
+def decodeATParamCommon(data, startIndex, delta, noParamMessage):
+    # Code common to both of the above calls, and others
     ds = ""
-    l = (data[1] << 8) + data[2] - 4
+    l = (data[1] << 8) + data[2] - delta
     if l > 0:
-        for i in range(7, 7 + l):
+        for i in range(startIndex, startIndex + l):
             ds = ds + getHex(data[i],2)
     else:
-        ds = "Read queued"
+        ds = noParamMessage
     print(padText("Command parameter value") + ds)
 
 
-def decodeZigbeeTransitReq(data):
+def decodeZigbeeTransitRequest(data):
     # The Xbee has issues a basic Zigbee command (frame ID 0x10)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
-    #   
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Zigbee transmit request\"")
+    #   Nothing
+
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee transmit request\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     read64bitAddress(data, 5)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
@@ -264,13 +267,14 @@ def decodeZigbeeTransitReq(data):
         print(padText("Data bytes (" + str(l) + ")") + ds)
 
 
-def decodeExplicitZigbeeCommand(data):
-    # The Xbee has received a many-to-one routing info packet (frame ID 0xA2)
+def decodeExplicitZigbeeCmdRequest(data):
+    # The Xbee is sending an explicit Zigbee packet (frame ID 0x11)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
-    #   
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Send Zigbee packet\"")
+    #   Nothing
+
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Send Zigbee packet\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     read64bitAddress(data, 5)
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
@@ -300,44 +304,69 @@ def decodeExplicitZigbeeCommand(data):
         else:
             decodeZCLFrame(dv)
 
-        
+
+def decodeRemoteCmdRequest(data):
+    # The Xbee is sending a remote AT response packet (frame ID 0x17)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Remote AT command request\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    read64bitAddress(data, 5)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    getSendOptions(data[15])
+    print(padText("XBee AT command") + "\"" + chr(data[16]) + chr(data[17]) + "\"")
+    decodeATParamCommon(data, 18, 15, "Read request")
+
+
+def decodeCreateSourceRouteRequest(data):
+    # The Xbee is sending a source route request (frame ID 0x21)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Remote AT command request\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    read64bitAddress(data, 5)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    print(padText("Route Command Options") + getHex(data[15],2))
+    
+    n = data[16]
+    print(padText("Number of addresses") + getHex(n,2))
+
+    l = (data[1] << 8) + data[2] - 14
+    if l > 0:
+        a = 0
+        c = 1
+        for i in range(17, 17 + l, 2):
+            a = (data[i] << 8) + data[i + 1]
+            print(padText("  Address " + str(c)) + getHex(a,4))
+            c = c + 1
+    elif l < n * 2:
+        print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
+        sys.exit(0)
+
+
 def decodeATResponse(data):
     # The Xbee has received an XBee AT response packet (frame ID 0x88)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Local AT command response\"")
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Local AT command response\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("XBee AT command") + chr(data[5]) + chr(data[6]))
     getATStatus(data[7])
+    
     ds = ""
     dv = []
     l = (data[1] << 8) + data[2] - 5
     if l > 0:
         for i in range(8, 8 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
-
-
-def decodeRemoteATCommand(data):
-    # The Xbee has received an XBee remote AT response packet (frame ID 0x97)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Remote AT command response\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
-    read64bitAddress(data, 5)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
-    getATStatus(data[17])
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 5
-    if l > 0:
-        for i in range(18, 18 + l):
             ds = ds + getHex(data[i],2)
             dv.append(data[i])
         print(padText("Frame data") + ds)
@@ -349,28 +378,9 @@ def decodeModemStatus(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Modem status\"" )
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Modem status\"" )
     getModemStatus(data[4])
-
-
-def decodeZigbeeReceivePacket(data):
-    # The Xbee has received an XBee remote AT response packet (frame ID 0x97)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Remote Zigbee response\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
-    getPacketStatus(data[14])
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 12
-    if l > 0:
-        for i in range(15, 15 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
 
 
 def decodeZigbeeTransmitStatus(data):
@@ -379,7 +389,8 @@ def decodeZigbeeTransmitStatus(data):
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Zigbee transmit status\"")
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee transmit status\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("Address (16-bit)") + getHex(((data[5] << 8) + data[6]),4))
     
@@ -392,13 +403,36 @@ def decodeZigbeeTransmitStatus(data):
     getDiscoveryStatus(data[9])
 
 
-def decodeZigbeeRXIndicator(data):
-    # The Xbee has received a Zigbee ZCL packet (frame ID 0x91)
+def decodeZigbeeReceivePacket(data):
+    # The Xbee has received a basic  packet (frame ID 0x90)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Zigbee explicit RX indicator\"")
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee receive packet (basic)\"")
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    getPacketStatus(data[14])
+    
+    ds = ""
+    dv = []
+    l = (data[1] << 8) + data[2] - 12
+    if l > 0:
+        for i in range(15, 15 + l):
+            ds = ds + getHex(data[i],2)
+            dv.append(data[i])
+        print(padText("Frame data") + ds)
+
+
+def decodeZigbeeRXIndicator(data):
+    # The Xbee has received an explicit Zigbee ZCL packet (frame ID 0x91)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee explicit RX indicator\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
     print(padText("Source endpoint") + getHex(data[14],2))
@@ -427,13 +461,97 @@ def decodeZigbeeRXIndicator(data):
             decodeZCLFrame(dv)
 
 
+def decodeZigbeeDataSampleRXIndicator(data):
+    # The Xbee has received a Zigbee IO Data Sample RX Indicator (frame ID 0x92)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee IO data sample\"")
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    getPacketStatus(data[14])
+
+    print(padText("Number of samples") + getHex(data[15],2))
+    nd = (data[16] << 8) + data[17]
+    start = 19
+    if nd > 0:
+        getDigitalChannelMask(data, 16)
+        start = 21
+    if data[18] > 0:
+        getAnalogChannelMask(data, start)
+
+
+def decodeXBeeSensorReadIndicator(data):
+    # The Xbee has received an XBee sensor read response (frame ID 0x93)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"XBee sensor read indicator response\"")
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    getSendOptions(data[14])
+    getOneWireStatus(data[15])
+    
+    # Read the sensor data
+    values = []
+    noSensors = 0
+    for i in range(16,24,2):
+        a = (data[i] << 8) + data[i + 1]
+        values.append(a)
+        if a == 0xFF:
+            noSensors = noSensors + 1
+    if noSensors == 4:
+        print("No AD sensors found")
+    else:
+        es = ""
+        for i in range(0,4):
+            es = es + getHex(values[i],4) + ", "
+        es = es[0:len(es)-2]
+        print(padText("AD sensor values") + es)
+    
+    # Read the thermometer data
+    a = (data[25] << 8) + data[26]
+    if a == 0xFFFF:
+        print("No thermometer found")
+    else:
+        print(padText("Thermometer reading") + getHex(a,4))
+
+
+def decodeRemoteATCommand(data):
+    # The Xbee has received an XBee remote AT response packet (frame ID 0x97)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Remote AT command response\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    read64bitAddress(data, 5)
+    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
+    getATStatus(data[17])
+    ds = ""
+    dv = []
+    l = (data[1] << 8) + data[2] - 5
+    if l > 0:
+        for i in range(18, 18 + l):
+            ds = ds + getHex(data[i],2)
+            dv.append(data[i])
+        print(padText("Frame data") + ds)
+
+
 def decodeManyToOneRouteIndicator(data):
     # The Xbee has received a many-to-one routing info packet (frame ID 0xA2)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
-    print(padText("XBee command ID") + getHex(data[3],2) + " - \"Many-to-one route request indicator\"")
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + "\"Many-to-one route request indicator\"")
     read64bitAddress(data, 4)
     print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
 
@@ -494,23 +612,23 @@ def decodeZCLFrame(frameData):
     
     index = 1
     if manSpec is True:
-        mc = (frameData[3] << 8) + frameData[4]
+        mc = (frameData[1] << 8) + frameData[2]
         print(padText("  Manufacturer code") + getHex(mc,4))
-        index = 5
+        index = 3
     
     # Decode and display the ZCL frame header's remaining two bytes
     tr = frameData[index]
     ci = frameData[index + 1]
-
+    index = index + 2
     print(padText("  Transaction seq. number") + getHex(tr,2))
     
-    if fc & 0x01 == 0:
+    if (fc & 0x01 == 0) and manSpec is False:
         print(padText("  Global command") + getHex(ci,2) + " - " + zclCmds[ci])
     else:
         print(padText("  Cluster command") + getHex(ci,2))
 
     # Payload is at 'index' + 2
-    if globalCmd is True:
+    if globalCmd is True and manSpec is False:
         # Only decode global commands for now
         decodeZCLCommand(ci, index + 2, frameData)
     else:
@@ -963,6 +1081,8 @@ def getZDOCommand(code):
 
 
 def getZDOType(code):
+    # Display the ZDO request type as embedded in the request
+    
     if code == 0x00:
         print(padText("  Request type") + "Single device response")
     else:
@@ -970,7 +1090,88 @@ def getZDOType(code):
 
 
 def getZDOStatus(code):
+    # Display the ZDO status code embedded in the response
+
     print(padText("  Response status") + getZCLAttributeStatus(code))
+
+
+def getDigitalChannelMask(data, start):
+    # Determine and report which, if any, XBee digital IOs have been enabled
+    # for sampling and include the sample digital data
+
+    nd = (data[start] << 8) + data[start + 1]
+    sd = (data[start + 3] << 8) + data[start + 4]
+    m = ["DIO0", "DIO1", "DIO3", "DIO4", "DIO5", "DIO6", "DIO7",
+         "N/A", "N/A", "DIO10", "DIO11", "DIC12", "N/A", "N/A", "N/A"]
+    es = ""
+    bad = False
+    for i in range(0,16):
+        v = int(math.pow(2,i))
+        if nd & v == v:
+            # Digital IO enabled
+            es = es + m[i]
+            
+            # Is the IO permitted?
+            if m[i] == "N/A":
+                bad = True
+            else:
+                # Is the sample HIGH or LOW?
+                if sd & v == v:
+                    es = es + " (HIGH), "
+                else:
+                    es = es + " (LOW), "
+    if len(es) > 0:
+        es = es[0:len(es)-2]
+    else:
+        es = "None"
+    print(padText("Enabled Digital IOs") + es)
+    if bad is True:
+        print("[ERROR] Unavailable Digital IOs selected")
+
+
+def getAnalogChannelMask(data, sampleStart):
+    # Determine and report which, if any, XBee analog IOs have been enabled
+    # for sampling and so have supplied data in the current frame
+    
+    code = data[18]
+    m = ["AD0", "AD1", "AD2", "AD3", "N/A", "N/A", "N/A", "VIN"]
+    es = ""
+    bad = False
+    count = 0
+    for i in range(0,8):
+        v = int(math.pow(2,i))
+        if code & v == v:
+            # Analog IO enabled
+            es = es + m[i]
+            if m[i] == "N/A":
+                bad = True
+            else:
+                # Read the sample value and add to the display string
+                s = (data[sampleStart + count] << 8) + data[sampleStart + 1 + count]
+                es = es + "(" + getHex(s,4) + "), "
+                count = count + 2
+    if len(es) > 0:
+        es = es[0:len(es)-2]
+    else:
+        es = "None"
+    print(padText("Enabled Analog IOs") + es)
+    if bad is True:
+        print("[ERROR] Unavailable Analog IOs selected")
+
+
+def getOneWireStatus(code):
+    # Determine and display an XBee's OneWire sensor status, if enabled
+
+    m = ["A/D Sensor Read", 0x01,
+         "Temperature Sensor Read", 0x02,
+         "Water present", 0x60]
+    
+    es = ""
+    for i in range(0,len(m),2):
+        if code & m[i + 1] == m[i + 1]:
+            es = es + m[i] + ", "
+    es = es[0:len(es)-2]
+    print(padText("OneWire sensor status") + es)
 
 
 ###########################################################################
@@ -1060,10 +1261,10 @@ if __name__ == '__main__':
                 if i < len(sys.argv) - 1:
                     v = sys.argv[i + 1]
                     if v == "true" or v == "yes" or v == "1":
-                        escaped = True
+                        debug = True
                         print("Extra debugging information will be printed during decoding")
                     elif v == "false" or v == "no" or v == "0":
-                        escaped = False
+                        debug = False
                     else:
                         print("[ERROR] bad argument for -d/--debug: " + v)
                         sys.exit(0)
@@ -1083,10 +1284,16 @@ if __name__ == '__main__':
         # Run through the args to find the packet data and process it
         # NOTE We do it this was so that we take into account options
         #      placed after the packet
+        skip = False
         for i in range(1, len(sys.argv)):
-            c = sys.argv[i]
-            if c[0] != "-":
-                fs = fs + c
+            if skip is False:
+                c = sys.argv[i]
+                if c[0] != "-":
+                    fs = fs + c
+                else:
+                    skip = True
+            else:
+                skip = False
         if len(fs) > 8:
             # Frame has to have at least four octets
             processPacket(fs)
