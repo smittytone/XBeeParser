@@ -28,9 +28,10 @@ XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92
 XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94
 XBEE_CMD_NODE_ID_INDICATOR                  = 0x95
 XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97
+XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0
 XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1
 XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA2
-XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0
+
 
 # ZCL Global Commands
 ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00
@@ -193,6 +194,8 @@ def processPacket(packet):
         decodeNodeIDIndicator(values) #DONE
     elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
         decodeRemoteATCommand(values) #DONE
+    elif cmd == XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS:
+        decodeFirmwareUpdate(values) #DONE
     elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
         decodeRouteRecordIndicator(values) #DONE
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
@@ -582,6 +585,23 @@ def decodeRemoteATCommand(data):
         print(padText("Frame data") + ds)
 
 
+def decodeFirmwareUpdate(data):
+    # The Xbee has received an XBee firmware update packet (frame ID 0xA0)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"XBee firmware update\"")
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    getPacketStatus(data[14])
+    getBootloaderMessage(data[15])
+
+    print(padText("Block number") + str(data[16]))
+    read64bitAddress(data, 4, "Target address (64-bit)")
+    
+    
 def decodeRouteRecordIndicator(data):
     # The Xbee has received a routing info packet (frame ID 0xA1)
     # Parameters:
@@ -808,7 +828,7 @@ def decodeZDO(data, cmd):
 # listed above.                                                           #
 ###########################################################################
 
-def read64bitAddress(frameData, start = 4):
+def read64bitAddress(frameData, start = 4, message = "Address (64-bit)"):
     # Reads the bytes representing a 64-bit address from the passed-in blob.
     # Parameters:
     #   1. Array - the frame data as a series of integer values
@@ -818,7 +838,7 @@ def read64bitAddress(frameData, start = 4):
     s = ""
     for i in range(start, start + 8):
         s = s + getHex(frameData[i], 2)
-    print(padText("Address (64-bit)") + s)
+    print(padText(message) + s)
 
 
 def read64bitSserdda(frameData, start = 4):
@@ -1259,6 +1279,18 @@ def getSourceEvent(code):
     else:
         print(padText("Source event") + m[code - 1])
 
+
+def getBootloaderMessage(code):
+    # Determine the bootloader message embedded in a firmware update packet
+
+    m = ["ACK", 0x06, "NACK", 0x15, "No MAC ACK", 0x40,
+         "Query - Bootload not active", 0x51, "Query response", 0x52]
+    got = False
+    for i in range(0,len(m)-1,2):
+        if code == m[i + 1]:
+            print(padText("Bootloader message") + m[i])
+            got = True
+            
 
 ###########################################################################
 # This section comprises generic utility functions used by all parts of   #
