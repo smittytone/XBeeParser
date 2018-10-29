@@ -649,6 +649,7 @@ def decodeManyToOneRouteIndicator(data):
 ##########################################################################
 
 def decodeZCLFrame(frameData):
+    # Decode a full ZCL frame
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
@@ -703,20 +704,20 @@ def decodeZCLFrame(frameData):
         index = 3
     
     # Decode and display the ZCL frame header's remaining two bytes
-    tr = frameData[index]
-    ci = frameData[index + 1]
+    tsn = frameData[index]
+    cid = frameData[index + 1]
     index = index + 2
-    print(padText("  Transaction seq. number") + getHex(tr,2))
+    print(padText("  Transaction seq. number") + getHex(tsn,2))
     
     if (fc & 0x01 == 0) and manSpec is False:
-        print(padText("  Global command") + getHex(ci,2) + " - " + zclCmds[ci])
+        print(padText("  Global command") + getHex(cid,2) + " - " + zclCmds[cid])
     else:
-        print(padText("  Cluster command") + getHex(ci,2))
+        print(padText("  Cluster command") + getHex(cid,2))
 
     # Payload is at 'index' + 2
     if globalCmd is True and manSpec is False:
         # Only decode global commands for now
-        decodeZCLCommand(ci, index + 2, frameData)
+        decodeZCLCommand(cid, frameData, index + 2)
     else:
         # Dump the data, which contains Cluster-specific info
         ds = ""
@@ -725,25 +726,40 @@ def decodeZCLFrame(frameData):
         print(padText("  Data") + ds)
 
 
-def decodeZCLCommand(cmd, start, data):
+def decodeZCLCommand(cmd, data, start):
     # Jump table for general ZCL commands
+    
     if cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
-        decodeZCLReadAttReq(start, data)
+        decodeZCLReadAttributeReq(data, start) #DONE
     elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP:
-        decodeZCLReadAttRsp(start, data)
+        decodeZCLReadAttributeRsp(data, start)
     elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_REQ:
-        decodeZCLWriteAttReq(start, data)
+        decodeZCLWriteAttributeReq(data, start)
     elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
-        decodeZCLWriteAttRsp(start, data)
+        decodeZCLWriteAttributeRsp(data, start)
 
 
-def decodeZCLReadAtts(start, data):
+def decodeZCLReadAttributeReq(data, start):
+    # Decode a ZCL read attribute request
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the ZCL data start within the data
+    # Returns:
+    #   Nothing
+     
     for i in range(start, len(data), 2):
         v = (data[i] << 8) + data[i + 1]
         print(padText("  Attribute ID") + getHex(v,4))
 
 
-def decodeZCLReadAttRsp(start, data):
+def decodeZCLReadAttributeRsp(data, start):
+    # Decode a ZCL read attribute response
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the ZCL data start within the data
+    # Returns:
+    #   Nothing
+     
     i = start
     done = False
     while done is False:
@@ -800,6 +816,13 @@ def decodeZCLReadAttRsp(start, data):
 
 
 def decodeZDO(data, cmd):
+    # Decode a ZDO packet
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - the 16-bit ZDO command code
+    # Returns:
+    #   Nothing
+     
     print(padText("  Transaction seq. number") + getHex(data[0],2))
     getZDOCommand(cmd)
 
@@ -807,6 +830,7 @@ def decodeZDO(data, cmd):
         # Network Address Request
         read64bitSserdda(data, 1)
         getZDOType(data[9])
+        
         if data[9] == 0x01:
             # Type value indicates an extended device response requested
             print(padText("  Start index") + getHex(data[10]))
@@ -815,6 +839,7 @@ def decodeZDO(data, cmd):
         getZDOStatus(data[1])
         read64bitSserdda(data, 2)
         print(padText("  Address (16-bit)") + getHex(data[10] + (data[11] << 8),4))
+        
         if len(data) > 12:
             print(padText("  No. of addresses") + getHex(data[12],2))
             print(padText("  Start index") + getHex(data[13],2))
@@ -828,25 +853,28 @@ def decodeZDO(data, cmd):
 # listed above.                                                           #
 ###########################################################################
 
-def read64bitAddress(frameData, start = 4, message = "Address (64-bit)"):
+def read64bitAddress(data, start = 4, message = "Address (64-bit)"):
     # Reads the bytes representing a 64-bit address from the passed-in blob.
     # Parameters:
     #   1. Array - the frame data as a series of integer values
     #   2. Integer - the index in the array at which the data is to be found
+    #   3. String - optional message prefix
     # Returns:
     #   The 64-bit address as a string of 8 octets
-    s = ""
+    
+    ms = ""
     for i in range(start, start + 8):
-        s = s + getHex(frameData[i], 2)
-    print(padText(message) + s)
+        ms = ms + getHex(data[i], 2)
+    print(padText(message) + ms)
 
 
-def read64bitSserdda(frameData, start = 4):
+def read64bitSserdda(data, start = 4):
     # As read64bitAddress(), but returning the address in little endian order
-    s = ""
+    
+    ms = ""
     for i in range(start + 7, start - 1, -1):
-        s = s + getHex(frameData[i], 2)
-    print(padText("  Address (64-bit)") + s)
+        ms = ms + getHex(data[i], 2)
+    print(padText("  Address (64-bit)") + ms)
 
 
 ###########################################################################
@@ -860,18 +888,21 @@ def getSendOptions(code):
     #   1. Integer - the status code included in the packet
     # Returns:
     #   Nothing
-    os = ""
+    
+    ms = ""
+    
     if code & 0x01 == 0x01:
-        os = os + "Disable retries and route repair, "
+        ms = ms + "Disable retries and route repair, "
     if code & 0x20 == 0x20:
-        os = os + "Enable APS encryption (if EE=1), "
+        ms = ms + "Enable APS encryption, "
     if code & 0x40 == 0x40:
-        os = os + "Use the extended transmission timeout, "
-    l = len(os)
-    if l > 0:
-        os = os[0:l - 2]
+        ms = ms + "Use the extended transmission timeout, "
+    
+    if len(ms) > 0:
+        ms = ms[0:-2]
     else:
-        os = "None"
+        ms = "None"
+
     print(padText("Options") + os)
 
 
@@ -881,8 +912,15 @@ def getATStatus(code):
     #   1. Integer - the status code included in the packet
     # Returns:
     #   Nothing
+    
     m = [ "OK", "ERROR", "Invalid Command", "Invalid Parameter", "TX Failure"]
-    print(padText("Command status") + m[code])
+    
+    for i in range(0, len(m)):
+        if code == i:
+            print(padText("Command status") + m[code])
+            return
+    
+    print("[Error] Unknown AT status code " + getHex(code,2))
 
 
 def getModemStatus(code):
@@ -891,22 +929,26 @@ def getModemStatus(code):
     #   1. Integer - the status code included in the packet
     # Returns:
     #   Nothing
-    m = [0x00, "Hardware Reset",
-         0x01, "Watchdog Timer Reset",
-         0x02, "Joined Network",
+    
+    m = [0x00, "Hardware reset",
+         0x01, "Watchdog timer reset",
+         0x02, "Joined network",
          0x03, "Disassociated",
-         0x06, "Coordinator Started",
-         0x07, "Network Security Updated",
-         0x0D, "Voltage Supply Exceeded",
-         0x11, "Modem Config Changed"]
+         0x06, "Coordinator started",
+         0x07, "Network security updated",
+         0x0D, "Voltage supply exceeded",
+         0x11, "Modem config changed"]
+    
     for i in range(0, len(m), 2):
         if code == m[i]:
             print(padText("Modem status") + m[i + 1])
             return
+    
     if code >= 0x80:
         print(padText("Modem status") + "Stack Error")
         return
-    print(padText("Modem status") + "[Error] " + getHex(code,2))
+    
+    print("[Error] Unknown modem status code " + getHex(code,2))
 
 
 def getPacketStatus(code):
@@ -915,18 +957,19 @@ def getPacketStatus(code):
     #   1. Integer - the status code included in the packet
     # Returns:
     #   Nothing
-    s = ""
+    
+    ms = ""
     if code == 0x00:
-        s = "Packet Not Acknowledged; "
+        ms = "Packet mot acknowledged, "
     if code & 0x01:
-        s = s + "Packet Acknowledged; "
+        ms = ms + "Packet acknowledged, "
     if code & 0x02:
-        s = s + "Packet a Broadcast Packet; "
+        ms = ms + "Broadcast packet, "
     if code & 0x20:
-        s = s + "Packet Encrypted with APS; "
+        ms = ms + "APS-encrypted packet, "
     if code & 0x40:
-        s = s + "Packet Sent By End-Device; "
-    print(padText("Status") + s[0:-2])
+        ms = ms + "End-Device sent packet, "
+    print(padText("Status") + ms[0:-2])
 
 
 def getDeliveryStatus(code):
@@ -935,28 +978,31 @@ def getDeliveryStatus(code):
     #   1. Integer - the status code included in the packet
     # Returns:
     #   Nothing
-    m = [   0x00, "Success",
-            0x01, "MAC ACK Failure",
-            0x02, "CCA Failure",
-            0x15, "Invalid Destination Endpoint",
-            0x21, "Network ACK Failure",
-            0x22, "Not Joined to Network",
-            0x23, "Self-addressed",
-            0x24, "Address Not Found",
-            0x25, "Route Not Found",
-            0x26, "Broadcast Source Failed to Hear a Neighbour Relay the Message",
-            0x2B, "Invalid Binding Table Index",
-            0x2C, "Resource Error: Lack of Free Buffers, Timers etc",
-            0x2D, "Attempted Broadcast with APS Transmission",
-            0x2E, "Attempted Unicast with APS Transmission, but EE=0",
-            0x32, "Resource Error: Lack of Free Buffers, Timers etc",
-            0x74, "Data Payload Too Large",
-            0x75, "Indirect Message Unrequested"]
+    
+    m = [0x00, "Success",
+         0x01, "MAC ACK Failure",
+         0x02, "CCA Failure",
+         0x15, "Invalid Destination Endpoint",
+         0x21, "Network ACK Failure",
+         0x22, "Not Joined to Network",
+         0x23, "Self-addressed",
+         0x24, "Address Not Found",
+         0x25, "Route Not Found",
+         0x26, "Broadcast Source Failed to Hear a Neighbour Relay the Message",
+         0x2B, "Invalid Binding Table Index",
+         0x2C, "Resource Error: Lack of Free Buffers, Timers etc",
+         0x2D, "Attempted Broadcast with APS Transmission",
+         0x2E, "Attempted Unicast with APS Transmission, but EE=0",
+         0x32, "Resource Error: Lack of Free Buffers, Timers etc",
+         0x74, "Data Payload Too Large",
+         0x75, "Indirect Message Unrequested"]
+    
     for i in range(0, len(m), 2):
         if code == m[i]:
             print(padText("Delivery status") + m[i + 1])
             return
-    print(padText("Delivery status") + "[ERROR] " + getHex(code,2))
+    
+    print("[ERROR] Unknown Delivery status code " + getHex(code,2))
 
 
 def getDiscoveryStatus(code):
@@ -965,50 +1011,58 @@ def getDiscoveryStatus(code):
     #   1. Integer - the status code included in the packet
     # Returns:
     #   Nothing
-    m = [ "No Discovery Overhead", "Address Discovery",
-          "Route Discovery", "Address and Route"]
-    if code < 0x04:
+    
+    m = [ "No Discovery Overhead", "Address Discovery", "Route Discovery", "Address and Route"]
+    
+    if code > -1 and code < 4:
         print(padText("Discovery status") + m[code])
     else:
-        print(padText("Discovery status") + "[ERROR] " + getHex(code,2))
+        print("[ERROR] Unknown Discovery status code " + getHex(code,2))
 
 
 def getZCLAttributeStatus(code):
-    m = [   0x00, "Success",
-            0x01, "Failure",
-            0x7e, "Not authorized",
-            0x7f, "Reserved field not zero",
-            0x80, "Malformed command",
-            0x81, "Unsupported cluster command",
-            0x82, "Unsupported general command",
-            0x83, "Unsupported manufacturer's cluster command",
-            0x84, "Unsupported manufacturer's general command",
-            0x85, "Invalid field",
-            0x86, "Unsupported attribute",
-            0x87, "Invalid value",
-            0x88, "Read only",
-            0x89, "Insufficient space",
-            0x8a, "Duplicate exists",
-            0x8b, "Not found",    
-            0x8c, "Unreportable attribute", 
-            0x8d, "Invalid data type",
-            0x8e, "Invalid selector", 
-            0x8f, "Write only", 
-            0x90, "Not found", 
-            0x91, "Not found",
-            0x92, "Read only",
-            0x93, "Insufficient space",
-            0x94, "Duplicate exists",
-            0x95, "Not found",    
-            0x96, "Unreportable attribute", 
-            0x97, "Invalid data type",
-            0x98, "Invalid selector", 
-            0x99, "Write only", 
-            0x9a, "Not found", 
-            0xc0, "Not found",   
-            0xc1, "Not found",   
-            0xc2, "Not found",   
-            0xc3, "Not found"]
+    # Decode the status of a ZCL attribute access operation
+    # Parameters:
+    #   1. Integer - the status code included in the packet
+    # Returns:
+    #   The status message string
+    
+    m = [0x00, "Success",
+         0x01, "Failure",
+         0x7e, "Not authorized",
+         0x7f, "Reserved field not zero",
+         0x80, "Malformed command",
+         0x81, "Unsupported cluster command",
+         0x82, "Unsupported general command",
+         0x83, "Unsupported manufacturer's cluster command",
+         0x84, "Unsupported manufacturer's general command",
+         0x85, "Invalid field",
+         0x86, "Unsupported attribute",
+         0x87, "Invalid value",
+         0x88, "Read only",
+         0x89, "Insufficient space",
+         0x8a, "Duplicate exists",
+         0x8b, "Not found",    
+         0x8c, "Unreportable attribute", 
+         0x8d, "Invalid data type",
+         0x8e, "Invalid selector", 
+         0x8f, "Write only", 
+         0x90, "Not found", 
+         0x91, "Not found",
+         0x92, "Read only",
+         0x93, "Insufficient space",
+         0x94, "Duplicate exists",
+         0x95, "Not found",    
+         0x96, "Unreportable attribute", 
+         0x97, "Invalid data type",
+         0x98, "Invalid selector", 
+         0x99, "Write only", 
+         0x9a, "Not found", 
+         0xc0, "Not found",   
+         0xc1, "Not found",   
+         0xc2, "Not found",   
+         0xc3, "Not found"]
+    
     for i in range(0, len(m), 2):
         if code == m[i]:
             return m[i + 1]
@@ -1016,62 +1070,69 @@ def getZCLAttributeStatus(code):
 
 
 def getZCLAttributeType(code):
-    m = [   0x00, "NULL",
-            0x08, "DATA8",
-            0x09, "DATA16",
-            0x0a, "DATA24",
-            0x0b, "DATA32",
-            0x0c, "DATA40",
-            0x0d, "DATA48",
-            0x0e, "DATA56",
-            0x0f, "DATA64",
-            0x10, "BOOL",
-            0x18, "MAP8",
-            0x19, "MAP16",
-            0x1a, "MAP24",
-            0x1b, "MAP32",
-            0x1c, "MAP40",
-            0x1d, "MAP48",    
-            0x1e, "MAP56", 
-            0x1f, "MAP64",
-            0x20, "UINT8", 
-            0x21, "UINT16", 
-            0x22, "UINT24", 
-            0x23, "UINT32",
-            0x24, "UINT40",
-            0x25, "UNIT48",
-            0x26, "UNIT56",
-            0x27, "UINT64",    
-            0x28, "INT8", 
-            0x29, "INT16", 
-            0x2a, "INT24", 
-            0x2b, "INT32",
-            0x2c, "INT40",
-            0x2d, "NIT48",
-            0x2e, "NIT56",
-            0x2f, "INT64", 
-            0x30, "ENUM8", 
-            0x31, "ENUM16", 
-            0x38, "SEMI", 
-            0x39, "SINGLE",
-            0x3a, "DOUBLE",   
-            0x41, "OCTSTR",   
-            0x42, "STRING",   
-            0x43, "OCTSTR16",
-            0x44, "STRING16", 
-            0x48, "ARRAY", 
-            0x4c, "STRUCT",
-            0x50, "SET",
-            0x51, "BAG",
-            0xe0, "ToD",
-            0xe1, "DATE",    
-            0xe2, "UTC", 
-            0xe8, "CLUSTERID", 
-            0xe9, "ATTRID", 
-            0xea, "BACOID",
-            0xf0, "EUI64",
-            0xf1, "KEY128",
-            0xff, "UNK"]
+    # Determine the type of data a ZCL attribute contains
+    # Parameters:
+    #   1. Integer - the ZCL data type code included in the packet
+    # Returns:
+    #   The data type as a string
+    
+    m = [0x00, "NULL",
+         0x08, "DATA8",
+         0x09, "DATA16",
+         0x0a, "DATA24",
+         0x0b, "DATA32",
+         0x0c, "DATA40",
+         0x0d, "DATA48",
+         0x0e, "DATA56",
+         0x0f, "DATA64",
+         0x10, "BOOL",
+         0x18, "MAP8",
+         0x19, "MAP16",
+         0x1a, "MAP24",
+         0x1b, "MAP32",
+         0x1c, "MAP40",
+         0x1d, "MAP48",    
+         0x1e, "MAP56", 
+         0x1f, "MAP64",
+         0x20, "UINT8", 
+         0x21, "UINT16", 
+         0x22, "UINT24", 
+         0x23, "UINT32",
+         0x24, "UINT40",
+         0x25, "UNIT48",
+         0x26, "UNIT56",
+         0x27, "UINT64",    
+         0x28, "INT8", 
+         0x29, "INT16", 
+         0x2a, "INT24", 
+         0x2b, "INT32",
+         0x2c, "INT40",
+         0x2d, "NIT48",
+         0x2e, "NIT56",
+         0x2f, "INT64", 
+         0x30, "ENUM8", 
+         0x31, "ENUM16", 
+         0x38, "SEMI", 
+         0x39, "SINGLE",
+         0x3a, "DOUBLE",   
+         0x41, "OCTSTR",   
+         0x42, "STRING",   
+         0x43, "OCTSTR16",
+         0x44, "STRING16", 
+         0x48, "ARRAY", 
+         0x4c, "STRUCT",
+         0x50, "SET",
+         0x51, "BAG",
+         0xe0, "ToD",
+         0xe1, "DATE",    
+         0xe2, "UTC", 
+         0xe8, "CLUSTERID", 
+         0xe9, "ATTRID", 
+         0xea, "BACOID",
+         0xf0, "EUI64",
+         0xf1, "KEY128",
+         0xff, "UNK"]
+    
     for i in range(0, len(m), 2):
         if code == m[i]:
             return m[i + 1]
@@ -1079,6 +1140,12 @@ def getZCLAttributeType(code):
 
 
 def getZCLAttributeSize(code):
+    # Determine the number of bytes the ZCL attribute requires
+    # Parameters:
+    #   1. Integer - the attribute size code included in the packet
+    # Returns:
+    #   The size of the attribute data in bytes, or -1 for error/no size
+    
     m = [   0x00, 0,
             0x08, 1,
             0x09, 2,
@@ -1135,6 +1202,7 @@ def getZCLAttributeSize(code):
             0xf0, 8,
             0xf1, 16,
             0xff, 0]
+    
     for i in range(0, len(m), 2):
         if code == m[i]:
             return m[i + 1]
@@ -1142,6 +1210,12 @@ def getZCLAttributeSize(code):
 
 
 def getZDOCommand(code):
+    # Display the ZDO request type as embedded in the request
+    # Parameters:
+    #   1. Integer - the command code included in the packet
+    # Returns:
+    #   The command name string
+    
     m = [ "16-bit Address", 0x0000,
           "64-bit Address", 0x0001,
           "Node Descriptor", 0x0002,
@@ -1157,45 +1231,63 @@ def getZDOCommand(code):
           "Management Leave", 0x0034,
           "Management Permit Join", 0x0036,
           "Management Network Update", 0x0038 ]
+    
     for i in range(0, len(m), 2):
         if code == m[i + 1]:
+            # Append the appropriate message type
             if code > 0x8000:
                 return (m[i] + " Response")
             else:
                 return (m[i] + " Request")
-    return "Unknown ZDO command"
+    return ("[ERROR] Unknown ZDO command " + getHex(code,4))
 
 
 def getZDOType(code):
     # Display the ZDO request type as embedded in the request
+    # Parameters:
+    #   1. Integer - the request type code included in the packet
+    # Returns:
+    #   Nothing
     
     if code == 0x00:
         print(padText("  Request type") + "Single device response")
-    else:
+    elif code == 0x01:
         print(padText("  Request type") + "Extended response")
+    else:
+        print("[ERROR] Unknown ZDO request type " + getHex(code,2))
 
 
 def getZDOStatus(code):
     # Display the ZDO status code embedded in the response
-
+    # Parameters:
+    #   1. Integer - the status code included in the packet
+    # Returns:
+    #   Nothing
+    
     print(padText("  Response status") + getZCLAttributeStatus(code))
 
 
 def getDigitalChannelMask(data, start):
     # Determine and report which, if any, XBee digital IOs have been enabled
     # for sampling and include the sample digital data
+    # Parameters:
+    #   1. Array - the current frame data
+    #   2. Integer - the index in the data of the digital channel info
+    # Returns:
+    #   Nothing
 
     nd = (data[start] << 8) + data[start + 1]
     sd = (data[start + 3] << 8) + data[start + 4]
     m = ["DIO0", "DIO1", "DIO3", "DIO4", "DIO5", "DIO6", "DIO7",
          "N/A", "N/A", "DIO10", "DIO11", "DIC12", "N/A", "N/A", "N/A"]
-    es = ""
+    ms = ""
     bad = False
+    
     for i in range(0,16):
         v = int(math.pow(2,i))
         if nd & v == v:
             # Digital IO enabled
-            es = es + m[i]
+            ms = ms + m[i]
             
             # Is the IO permitted?
             if m[i] == "N/A":
@@ -1203,93 +1295,124 @@ def getDigitalChannelMask(data, start):
             else:
                 # Is the sample HIGH or LOW?
                 if sd & v == v:
-                    es = es + " (HIGH), "
+                    ms = ms + " (HIGH), "
                 else:
-                    es = es + " (LOW), "
-    if len(es) > 0:
-        es = es[0:len(es)-2]
+                    ms = ms + " (LOW), "
+    
+    if len(ms) > 0:
+        # Remove the final comma and space from the message string
+        ms = ms[0:-2]
     else:
-        es = "None"
-    print(padText("Enabled Digital IOs") + es)
+        ms = "None"
+    
+    print(padText("Enabled Digital IOs") + ms)
     if bad is True:
         print("[ERROR] Unavailable Digital IOs selected")
 
 
-def getAnalogChannelMask(data, sampleStart):
+def getAnalogChannelMask(data, start):
     # Determine and report which, if any, XBee analog IOs have been enabled
     # for sampling and so have supplied data in the current frame
-    
+    # Parameters:
+    #   1. Array - the current frame data
+    #   2. Integer - the index in the data of the analog sample data
+    # Returns:
+    #   Nothing
+
     code = data[18]
     m = ["AD0", "AD1", "AD2", "AD3", "N/A", "N/A", "N/A", "VIN"]
-    es = ""
+    ms = ""
     bad = False
     count = 0
+    
     for i in range(0,8):
         v = int(math.pow(2,i))
         if code & v == v:
             # Analog IO enabled
-            es = es + m[i]
+            ms = ms + m[i]
             if m[i] == "N/A":
                 bad = True
             else:
                 # Read the sample value and add to the display string
-                s = (data[sampleStart + count] << 8) + data[sampleStart + 1 + count]
-                es = es + "(" + getHex(s,4) + "), "
+                s = (data[start + count] << 8) + data[start + 1 + count]
+                ms = ms + "(" + getHex(s,4) + "), "
                 count = count + 2
-    if len(es) > 0:
-        es = es[0:len(es)-2]
+    
+    if len(ms) > 0:
+        # Remove the final comma and space from the message string
+        ms = ms[0:-2]
     else:
-        es = "None"
-    print(padText("Enabled Analog IOs") + es)
+        ms = "None"
+    
+    print(padText("Enabled Analog IOs") + ms)
     if bad is True:
         print("[ERROR] Unavailable Analog IOs selected")
 
 
 def getOneWireStatus(code):
     # Determine and display an XBee's OneWire sensor status, if enabled
+    # Parameters:
+    #   1. Integer - the status code included in the packet
+    # Returns:
+    #   Nothing
 
-    m = ["A/D Sensor Read", 0x01,
-         "Temperature Sensor Read", 0x02,
-         "Water present", 0x60]
+    m = ["A/D Sensor Read", 0x01, "Temperature Sensor Read", 0x02, "Water present", 0x60]
     
-    es = ""
-    for i in range(0,len(m),2):
+    ms = ""
+    for i in range(0, len(m), 2):
         if code & m[i + 1] == m[i + 1]:
-            es = es + m[i] + ", "
-    es = es[0:len(es)-2]
-    print(padText("OneWire sensor status") + es)
+            ms = ms + m[i] + ", "
+    
+    # Remove the final comma and space from the message string
+    ms = ms[0:-2]
+    print(padText("OneWire sensor status") + ms)
 
 
 def getDeviceType(code):
     # Determine the device type embedded in a Node Ident packet
+    # Parameters:
+    #   1. Integer - the type code included in the packet
+    # Returns:
+    #   Nothing
 
     m = ["Coordinator", "Router", "End Device"]
+    
     if code < 0 or code > 2:
-        print("[ERROR] mis-set device type " + str(code))
+        print("[ERROR] Unknown Node Identification device type " + str(code))
     else:
         print(padText("Device type") + m[code])
 
 
 def getSourceEvent(code):
     # Determine the device type embedded in a Node Ident packet
+    # Parameters:
+    #   1. Integer - the event source code included in the packet
+    # Returns:
+    #   Nothing
 
     m = ["Pushbutton", "Joining", "Power-cycle"]
+    
     if code < 1 or code > 3:
-        print("[ERROR] mis-set event type " + str(code))
+        print("[ERROR] Unknown Node Identification event type " + str(code))
     else:
         print(padText("Source event") + m[code - 1])
 
 
 def getBootloaderMessage(code):
     # Determine the bootloader message embedded in a firmware update packet
+    # Parameters:
+    #   1. Integer - the message code included in the packet
+    # Returns:
+    #   Nothing
 
     m = ["ACK", 0x06, "NACK", 0x15, "No MAC ACK", 0x40,
          "Query - Bootload not active", 0x51, "Query response", 0x52]
-    got = False
-    for i in range(0,len(m)-1,2):
+    
+    for i in range(0, len(m), 2):
         if code == m[i + 1]:
             print(padText("Bootloader message") + m[i])
-            got = True
+            return
+    print("[ERROR] Unknown Firmware Update Bootloader message value " + getHex(code, 2))
             
 
 ###########################################################################
@@ -1297,7 +1420,7 @@ def getBootloaderMessage(code):
 # the program                                                             #
 ###########################################################################
 
-def getHex(v,d):
+def getHex(v, d):
     # Convert the integer 'v' to a hex string of 'd' characters
     # prefix-padding as required
     # Parameters:
@@ -1305,11 +1428,12 @@ def getHex(v,d):
     #   2. Integer - the number of characters the final string should comprise
     # Returns:
     #   String - the hex characters
+    
     s = "{:0" + str(d) + "X}"
     return s.format(v)
 
 
-def padText(s,e=True):
+def padText(s, e = True):
     # Pad the end of the passed string 's' with spaces up to a maximum
     # indicated by 'TEXT_SIZE' and, if 'e' is True, append ": "
     # Parameters:
@@ -1317,6 +1441,7 @@ def padText(s,e=True):
     #   2. Boolean - should the returned string be tailed with ": "
     # Returns:
     #   String
+    
     l = TEXT_SIZE - len(s)
     t = s + SPACE_STRING[0:l]
     if e is True:
