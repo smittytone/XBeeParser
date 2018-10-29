@@ -1,4 +1,4 @@
-# XBee Parser #
+# XBeeParser #
 
 This is an XBee packet decoder written in Python 3.
 
@@ -62,6 +62,6 @@ Manufacturer ID               : 101E
 
 ## Licence and Copyright ##
 
-XBee Parser's source code is issued under the MIT license.
+XBeeParser's source code is issued under the MIT license.
 
-XBee Parser source code is copyright &copy; 2018, Tony Smith.
+XBeeParser source code is copyright &copy; 2018, Tony Smith.
