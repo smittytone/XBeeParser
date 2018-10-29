@@ -194,7 +194,7 @@ def processPacket(packet):
     elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
         decodeRemoteATCommand(values) #DONE
     elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
-        decodeRouteRecordIndicator(values)
+        decodeRouteRecordIndicator(values) #DONE
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
         decodeManyToOneRouteIndicator(values) #DONE
     else:
@@ -571,6 +571,7 @@ def decodeRemoteATCommand(data):
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
     getATStatus(data[17])
+    
     ds = ""
     dv = []
     l = (data[1] << 8) + data[2] - 5
@@ -579,6 +580,34 @@ def decodeRemoteATCommand(data):
             ds = ds + getHex(data[i],2)
             dv.append(data[i])
         print(padText("Frame data") + ds)
+
+
+def decodeRouteRecordIndicator(data):
+    # The Xbee has received a routing info packet (frame ID 0xA1)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Route record indicator response\"")
+    read64bitAddress(data, 4)
+    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    getPacketStatus(data[14])
+    
+    n = data[15]
+    print(padText("Number of addresses") + getHex(n,2))
+
+    l = (data[1] << 8) + data[2] - 13
+    if l > 0:
+        a = 0
+        c = 1
+        for i in range(16, 16 + l, 2):
+            a = (data[i] << 8) + data[i + 1]
+            print(padText("  Address " + str(c)) + getHex(a,4))
+            c = c + 1
+    elif l < n * 2:
+        print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
+        sys.exit(0)
 
 
 def decodeManyToOneRouteIndicator(data):
