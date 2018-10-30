@@ -767,11 +767,12 @@ def decodeZCLReadAttributeRsp(data, start):
         print(padText("  Attribute ID") + getHex(id,4))
         print(padText("  Attribute status") + getZCLAttributeStatus(data[i + 2]))
         if data[i + 2] == 0:
-            print(padText("  Attribute type") + getZCLAttributeType(data[i + 3]))
-            l = getZCLAttributeSize(data[i + 3])
+            t = data[i + 3]
+            print(padText("  Attribute type") + getZCLAttributeType(t))
+            l = getZCLAttributeSize(t)
             if l != -1:
                 # The data is of a fixed size ('l')
-                if data[i + 3] == 0x10:
+                if t == 0x10:
                     # Handle Boolean values separately
                     s = "FORBIDDEN"
                     if data[i + 4] == 0x00:
@@ -790,20 +791,29 @@ def decodeZCLReadAttributeRsp(data, start):
                         k = k + 8
                     print(padText("  Attribute value") + getHex(v,l))
             else:
-                if data[i + 3] == 0x41 or data[i + 3] == 0x42:
+                if t == 0x41 or t == 0x42:
+                    # Octet or char string
                     l = data[i + 4]
                     ds = ""
                     for j in range(i + 5, i + 5 + l):
                         ds = ds + chr(data[j])
                     print(padText("  Attribute value") + ds)
                     i = i + 4 + l
-                elif data[i + 3] == 0x43 or data[i + 3] == 0x44:
+                elif t == 0x43 or t == 0x44:
+                    # Long octet or char string
                     l = (data[i + 4] << 8) + data[i + 5]
                     ds = ""
                     for j in range(i + 6, i + 6 + l):
                         ds = ds + chr(data[j])
                     print(padText("  Attribute value") + ds)
                     i = i + 5 + l
+                elif t == 0x48 or t == 0x50 or t == 0x51:
+                    # Array, Set or bag
+                    l = data[i + 4]
+                    if l != -1:
+                        s = l * ((data[i + 5] << 8) + data[i + 6])
+                        for k in range (7, s, l):
+                            getDataItem(data, k)
                 else:
                     # TODO
                     print(padText("  Attribute value") + "TBD")
