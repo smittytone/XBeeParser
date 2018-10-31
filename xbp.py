@@ -32,7 +32,6 @@ XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0
 XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1
 XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA2
 
-
 # ZCL Global Commands
 ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00
 ZCL_GLOBAL_CMD_READ_ATTR_RSP                = 0x01
@@ -58,6 +57,12 @@ ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14
 ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ            = 0x15
 ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16
 
+# Internal ZCL frame types
+ATT_TYPE_READ_RSP                           = 0x00
+ATT_TYPE_WRITE_REQ                          = 0x01
+ATT_TYPE_WRITE_RSP                          = 0x02
+
+
 ##########################################################################
 # Application-specific constants                                         #
 ##########################################################################
@@ -65,13 +70,13 @@ ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "0.0.1"
+APP_VERSION = "0.0.2"
 
-# ZCL Global Commands
-zclCmds = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
-           "Write Attributes Response", "Write Attributes No Response", "Configure Reporting", "Configure Reporting Response",
-           "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
-           "Discover Attributes", "Discover Attributes Response"]
+# ZCL Global Command names
+ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
+                "Write Attributes Response", "Write Attributes No Response", "Configure Reporting", "Configure Reporting Response",
+                "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
+                "Discover Attributes", "Discover Attributes Response"]
 
 
 ##########################################################################
@@ -655,7 +660,7 @@ def decodeZCLFrame(frameData):
     # Returns:
     #   Nothing
     
-    global zclCmds
+    global ZCLCommmands
     
     manSpec = False
     globalCmd = True
@@ -710,7 +715,7 @@ def decodeZCLFrame(frameData):
     print(padText("  Transaction seq. number") + getHex(tsn,2))
     
     if (fc & 0x01 == 0) and manSpec is False:
-        print(padText("  Global command") + getHex(cid,2) + " - " + zclCmds[cid])
+        print(padText("  Global command") + getHex(cid,2) + " - " + ZCLCommmands[cid])
     else:
         print(padText("  Cluster command") + getHex(cid,2))
 
@@ -731,12 +736,14 @@ def decodeZCLCommand(cmd, data, start):
     
     if cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
         decodeZCLReadAttributeReq(data, start) #DONE
-    elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP:
-        decodeZCLReadAttributeRsp(data, start)
-    elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_REQ:
-        decodeZCLWriteAttributeReq(data, start)
+    elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP or cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_NO:
+        decodeAttributeList(data, start, ATT_TYPE_READ_RSP) #DONE
+    elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_REQ or cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_UND:
+        decodeAttributeList(data, start, ATT_TYPE_WRITE_REQ) #DONE
     elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
-        decodeZCLWriteAttributeRsp(data, start)
+        decodeAttributeList(data, start, ATT_TYPE_WRITE_RSP) #DONE
+    else:
+        print("[ERROR] General command " + getHex(cmd,4) + " not yet supported by this program")
 
 
 def decodeZCLReadAttributeReq(data, start):
@@ -752,77 +759,187 @@ def decodeZCLReadAttributeReq(data, start):
         print(padText("  Attribute ID") + getHex(v,4))
 
 
-def decodeZCLReadAttributeRsp(data, start):
+def decodeAttributeList(data, start, attType):
     # Decode a ZCL read attribute response
     # Parameters:
     #   1. Array - the frame data as a series of integer values
     #   2. Integer - index of the ZCL data start within the data
+    #   3. Integer - the attribute class we're investigating, eg. read response,
+    #                write request
     # Returns:
     #   Nothing
-     
-    i = start
+    
+    index = start
     done = False
     while done is False:
-        id = data[i] + (data[i + 1] << 8)
-        print(padText("  Attribute ID") + getHex(id,4))
-        print(padText("  Attribute status") + getZCLAttributeStatus(data[i + 2]))
-        if data[i + 2] == 0:
-            t = data[i + 3]
-            print(padText("  Attribute type") + getZCLAttributeType(t))
-            l = getZCLAttributeSize(t)
-            if l != -1:
-                # The data is of a fixed size ('l')
-                if t == 0x10:
-                    # Handle Boolean values separately
-                    s = "FORBIDDEN"
-                    if data[i + 4] == 0x00:
-                        s = "FALSE"
-                    else:
-                        s = "TRUE"
-                    print(padText("  Attribute value") + s)
-                    i = i + 5  
-                else:  
-                    # Handle all other numeric values
-                    i = i + 4 + l
-                    v = 0
-                    k = 0
-                    for j in range(i, i - l, -1):
-                        v = v + (data[j] << k)
-                        k = k + 8
-                    print(padText("  Attribute value") + getHex(v,l))
-            else:
-                if t == 0x41 or t == 0x42:
-                    # Octet or char string
-                    l = data[i + 4]
-                    ds = ""
-                    for j in range(i + 5, i + 5 + l):
-                        ds = ds + chr(data[j])
-                    print(padText("  Attribute value") + ds)
-                    i = i + 4 + l
-                elif t == 0x43 or t == 0x44:
-                    # Long octet or char string
-                    l = (data[i + 4] << 8) + data[i + 5]
-                    ds = ""
-                    for j in range(i + 6, i + 6 + l):
-                        ds = ds + chr(data[j])
-                    print(padText("  Attribute value") + ds)
-                    i = i + 5 + l
-                elif t == 0x48 or t == 0x50 or t == 0x51:
-                    # Array, Set or bag
-                    l = data[i + 4]
-                    if l != -1:
-                        s = l * ((data[i + 5] << 8) + data[i + 6])
-                        for k in range (7, s, l):
-                            getDataItem(data, k)
-                else:
-                    # TODO
-                    print(padText("  Attribute value") + "TBD")
-                    i = i + 3
-        else:
-            # Attribute access unsuccessful
-            i = i + 3
-        if i >= len(data):
+        # Get the next attribute record
+        if attType == ATT_TYPE_READ_RSP:
+            index = decodeAttribute(data, index)
+        elif attType == ATT_TYPE_WRITE_REQ:
+            index = decodeAttributeWriteReq(data, index)
+        elif attType == ATT_TYPE_WRITE_RSP:
+            index = decodeAttributeWriteRsp(data, index)
+        if index >= len(data):
             done = True
+
+
+def decodeAttribute(data, start):
+    # Display an attribute's metadata
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute record within the data
+    # Returns:
+    #   The index of the next attribute in the data
+    
+    index = start
+    
+    print(padText("  Attribute ID") + getHex(((data[index] << 8) + data[index + 1]), 4))
+    print(padText("  Attribute read status") + getZCLAttributeStatus(data[index + 2]))
+    print(padText("  Attribute type") + getZCLAttributeType(data[index + 2]))
+    
+    if data[index + 2] == 0:
+        # Now get the attribute data
+        index = index + 4 + decodeAttributeData(data, index + 4, data[index + 3])
+    else:
+        # Attribute access unsuccessful - just skip it
+        index = index + 4
+        print("  [ERROR] Cannot read attribute data")
+    return index
+
+
+def decodeAttributeData(data, start, dataType):
+    # Get the attribute's data
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute data within 
+    #                the ZCL frame, not the start of the attribute record
+    #   3. Integer - the data type of the index
+    # Returns:
+    #   The number of bytes of data read (ie. how far to move the pointer)
+    
+    # How many bytes hold the attribute's data?
+    if getZCLAttributeSize(dataType) != -1:
+        # The data is of a fixed size ('l')
+        return decodeValue(data, start, dataType)
+    else:
+        # The data is not a fixed size
+        return decodeCollection(data, start, dataType)
+    
+
+def decodeValue(data, start, dataType):
+    # Extract and display a single, fixed-size value
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute data within the ZCL frame
+    #   3. Integer - the data type of the index
+    # Returns:
+    #   The number of data bytes read
+    
+    size = 1
+    if dataType == 0x10:
+        # Handle Boolean values separately
+        s = "FORBIDDEN"
+        if data[start] == 0x00:
+            s = "FALSE"
+        else:
+            s = "TRUE"
+        print(padText("  Attribute value") + s)
+    else:  
+        # Handle all other numeric values
+        size = getZCLAttributeSize(dataType)
+        v = 0
+        k = 0
+        for j in range(start + size - 1, start - 1 , -1):
+            v = v + (data[j] << k)
+            k = k + 8
+        print(padText("  Attribute value") + getHex(v,l))
+    return size
+
+
+def decodeCollection(data, start, dataType):
+    # Decode and display a collection value
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute or sub-attribute 
+    #                data start within the frame 
+    #   3. Integer - the data type of the index
+    # Returns:
+    #   The number of bytes read for the data unit
+    
+    index = start
+    if dataType == 0x41 or dataType == 0x42:
+        # Octet or char string
+        length = data[index]
+        ds = ""
+        for j in range(index + 1, index + 1 + length):
+            ds = ds + chr(data[j])
+        print(padText("  Attribute value") + ds)
+        index = index + 1 + length
+    elif dataType == 0x43 or dataType == 0x44:
+        # Long octet or char string
+        length = (data[index] << 8) + data[index + 1]
+        ds = ""
+        for j in range(index + 2, index + 2 + length):
+            ds = ds + chr(data[j])
+        print(padText("  Attribute value") + ds)
+        index = index + 2 + length
+    elif dataType == 0x48 or dataType == 0x50 or dataType == 0x51:
+        # Array, Set or Bag - collections of the same type so we need
+        # to iterate to read in all the element values
+        length = 0
+        subType = data[index]
+        size = getZCLAttributeSize(data[subType])
+        itemCount = (data[index + 1] << 8) + data[index + 2]
+        for j in range(0, itemCount):
+            # NOTE decodeAttribute() expects to receive the start of the attribute
+            #      (ie. header + data) not the start of a collection sub-attribute
+            #      (ie. data), so we need to adjust the index back to get the
+            #      correct bytes
+            # NOTE Ignore the nesting limit for now
+            adjustedIndex = index + 3 + (j * size)
+            length = length + decodeAttributeData(data, adjustedIndex, subType)
+        index = index + 3 + length
+    elif type == 0x52:
+        # Struct - collection of mixed types, os this is more complex 
+        itemCount = (data[index] << 8) + data[index + 1]
+        length = 0
+        itemLength = 0
+        for j in range(0, itemCount):
+            adjustedIndex = index + 2 + itemLength
+            subType = data[adjustedIndex];
+            itemLength = 1 + decodeAttributeData(data, adjustedIndex + 1, subType)
+            length = length + itemLength
+        index = index + 2 + length
+    return index - start
+
+
+def decodeAttributeWriteReq(data, start):
+    # Display an attribute's metadata
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute record within the data
+    # Returns:
+    #   The index of the next attribute in the data
+    
+    index = start
+    print(padText("  Attribute ID") + getHex(((data[index] << 8) + data[index + 1]), 4))
+    print(padText("  Attribute type") + getZCLAttributeType(data[index + 2]))
+    index = index + 3 + decodeAttributeData(data, index + 3, data[index + 2])
+    return index
+
+
+def decodeAttributeWriteRsp(data, start):
+    # Get the attribute's write status and ID
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute data within 
+    #                the ZCL frame, not the start of the attribute record
+    # Returns:
+    #   The number of bytes of data read (ie. how far to move the pointer)
+
+    print(padText("  Attribute ID") + getHex(((data[start + 1] << 8) + data[start + 2]), 4))
+    print(padText("  Attribute write status") + getZCLAttributeStatus(data[start]))
+    return start + 3
 
 
 def decodeZDO(data, cmd):
