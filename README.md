@@ -4,7 +4,7 @@ This is an XBee packet decoder written in Python 3.
 
 It is a work in progress. Version 1.0.0 decodes all the standard XBee packets, and provides further decoding of a limited (but growing) selection of Zigbee Device Object (ZDO) commands (eg. 16-bit network address request) and general (aka ‘global’) Zigbee Cluster Library commands (eg. Read Attribute).
 
-### Usage ###
+## Usage ##
 
 Run XBeeParser at the command line and provide a code XBee packet as a string of hexadecimal octets:
 
@@ -18,6 +18,8 @@ The XBee packet string need not be a single string; you can also include spaces:
 python xbp.py 7e 00 20 95 00 13 a2 00 40 52 2b aa 7d 84 02 7d 84 00 13 a2 00 40 52 2b aa 20 00 
     ff fe 01 01 c1 05 10 1e 1b
 ```
+
+### Make XBeeParser Global ###
 
 To simplify usage of XBeeParser, run the following commands:
 
@@ -34,7 +36,7 @@ xbp 7e 00 05 88 05 45 45 00 e8
 
 By default, XBeeParser assumes packets have been escaped, but this can be disabled with the `-e` or `--escape` switch. Follow this with `false` to disable escaping (or `true` to be explicit about enabling escaping.
 
-### Options ###
+## Options ##
 
 XBeeParser has the following options:
 
@@ -45,7 +47,9 @@ XBeeParser has the following options:
 | `-v` | `--version` | N/A | Show version information |
 | `-h` | `--help` | N/A | Show help information |
 
-### Examples ###
+## Examples ##
+
+#### Using Options ####
 
 ```bash
 python xbp.py -d true -e false 7e0020950013a20040522baa7d84027d840013a20040522baa2000fffe0101c105101e1b
@@ -73,6 +77,8 @@ Digi Profile ID               : C105
 Manufacturer ID               : 101E
 Checksum                      : 1B
 ```
+
+#### Zigbee ####
 
 ```bash
 python xbp.py 7E 002D 91 0013A200 40522BAA 06FC 00 00 8038 0000 01 01 00 00F8FF07 1D00 0000 10 54 5E 69 5B 4B 48 44 48 55 55 57 46 51 41 44 4B 6E
