@@ -367,7 +367,7 @@ def decodeATResponse(data):
     
     print(padText("XBee command ID") + getHex(data[3],2) + " \"Local AT command response\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
-    print(padText("XBee AT command") + chr(data[5]) + chr(data[6]))
+    print(padText("XBee AT command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
     getATStatus(data[7])
     
     ds = ""
@@ -1030,7 +1030,7 @@ def getSendOptions(code):
     else:
         ms = "None"
 
-    print(padText("Options") + os)
+    print(padText("Options") + ms)
 
 
 def getATStatus(code):
