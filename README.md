@@ -1,10 +1,12 @@
-# XBeeParser #
+# XBeeParser 1.0.0 #
 
 This is an XBee packet decoder written in Python 3.
 
+It is a work in progress. Version 1.0.0 decodes all the standard XBee packets, and provides further decoding of a limited (but growing) selection of Zigbee Device Object (ZDO) commands (eg. 16-bit network address request) and general (aka ‘global’) Zigbee Cluster Library commands (eg. Read Attribute).
+
 ### Usage ###
 
-Run XBeeParser at the command line, providing a code XBee packet as a string of hexadecimal octets:
+Run XBeeParser at the command line and provide a code XBee packet as a string of hexadecimal octets:
 
 ```bash
 python xbp.py 7e0020950013a20040522baa7d84027d840013a20040522baa2000fffe0101c105101e1b
@@ -17,6 +19,17 @@ python xbp.py 7e 00 20 95 00 13 a2 00 40 52 2b aa 7d 84 02 7d 84 00 13 a2 00 40 
     ff fe 01 01 c1 05 10 1e 1b
 ```
 
+To simplify usage of XBeeParser, run the following commands:
+
+1. `mv xbp.py /usr/local/bin/xbp`
+2. `chmod +x /usr/local/bin/xbp`
+
+Then you run XBeeParser from any location in your filesystem:
+
+```bash
+xbp 7e 00 05 88 05 45 45 00 e8
+```
+
 ### Escaping ###
 
 By default, XBeeParser assumes packets have been escaped, but this can be disabled with the `-e` or `--escape` switch. Follow this with `false` to disable escaping (or `true` to be explicit about enabling escaping.
@@ -27,8 +40,8 @@ XBeeParser has the following options:
 
 | Short | Long | Values | Description |
 | :-: | --- | :-: | --- |
-| `-e` | `--escape` | `true` or `false` | Use escaping when decoding packets |
-| `-d` | `--debug` | `true` or `false` | Show extra debug information |
+| `-e` | `--escape` | `true` or `false` | Use escaping when decoding packets. Default: `true` |
+| `-d` | `--debug` | `true` or `false` | Show extra debug information. Default: `false` |
 | `-v` | `--version` | N/A | Show version information |
 | `-h` | `--help` | N/A | Show help information |
 
@@ -58,25 +71,35 @@ Device type                   : Router
 Source event                  : Pushbutton
 Digi Profile ID               : C105
 Manufacturer ID               : 101E
+Checksum                      : 1B
 ```
 
 ```bash
-python xbp.py 7e 00 14 08 09 4b 59 5a 69 67 42 65 65 41 6c 6c 69 61 6e 63 65 30 39 92
+python xbp.py 7E 002D 91 0013A200 40522BAA 06FC 00 00 8038 0000 01 01 00 00F8FF07 1D00 0000 10 54 5E 69 5B 4B 48 44 48 55 55 57 46 51 41 44 4B 6E
 ```
 
 This generates the following output:
 
 ```bash
 XBee frame found
-Frame length                  : 20 bytes
-XBee command ID               : 08 "Issue local AT command"
-XBee frame ID                 : 09
-XBee AT command               : "KY"
-Command parameter value       : 5A6967426565416C6C69616E63653039
+Frame length                  : 45 bytes
+XBee command ID               : 91 "Zigbee explicit RX indicator"
+Address (64-bit)              : 0013A20040522BAA
+Address (16-bit)              : 06FC
+Source endpoint               : 00
+Destination endpoint          : 00
+Cluster ID                    : 8038
+Profile ID                    : 0000
+Status                        : Packet acknowledged
+Frame data                    : 010000F8FF071D00000010545E695B4B484448555557465141444B
+  ZDO command                 : Management Network Update Response
+  Transaction seq. number     : 01
+  Response status             : Success
+Checksum                      : 6E
 ```
 
 ## Licence and Copyright ##
 
-XBeeParser's source code is issued under the MIT license.
+XBeeParser's source code is issued under the [MIT license](LICENSE).
 
 XBeeParser source code is copyright &copy; 2018, Tony Smith.
