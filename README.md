@@ -109,3 +109,5 @@ Checksum                      : 6E
 XBeeParser's source code is issued under the [MIT license](LICENSE).
 
 XBeeParser source code is copyright &copy; 2018, Tony Smith.
+
+XBee is a brand of Digi International.
