@@ -121,7 +121,7 @@ def processPacket(packet):
     # Does the data contain an even number of characters? It should
     # TODO Should this just pad the end with 0?
     if len(packet) % 2 != 0:
-        print("[ERROR] Packet data does not contain an even number of characters")
+        print("[ERROR] Packet data does not contain an even number of octets")
         return
 
     # Convert each pair of characters (which represent a single byte)
@@ -150,7 +150,7 @@ def processPacket(packet):
     if values[0] == 0x7E:
         print("XBee frame found")
     else:
-        print("[ERROR] Packet data does not start with an XBee signature (" + getHex(values[0],2) + ")")
+        print("[ERROR] Packet data does not start with an XBee signature (" + getHex(values[0],2) + ", should be 7E)")
         return
     
     # Test the checksum value (the last byte in the packet)
@@ -206,7 +206,7 @@ def processPacket(packet):
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
         decodeManyToOneRouteIndicator(values) #DONE
     else:
-        print("[ERROR] Unknown frame type: " + getHex(values[3],2))
+        print("[ERROR] Unknown or not-yet-supported frame type: " + getHex(values[3],2))
         return
 
 
@@ -231,11 +231,12 @@ def decodeParamQueueRequest(data):
     # Returns:
     #   Nothing
 
-    decodeATCommon(data, "queue AT command parameter value", "Read queued")
+    decodeATCommon(data, "Queue AT command parameter value", "Read queued")
 
 
 def decodeATCommon(data, commandInfo, noParamMessage):
     # Code common to both of the above calls
+    
     print(padText("XBee command ID") + getHex(data[3],2) + " \"" + commandInfo + "\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("XBee AT command") + "\"" + chr(data[5]) + chr(data[6]) + "\"")
@@ -244,6 +245,7 @@ def decodeATCommon(data, commandInfo, noParamMessage):
 
 def decodeATParamCommon(data, startIndex, delta, noParamMessage):
     # Code common to both of the above calls, and others
+    
     ds = ""
     l = (data[1] << 8) + data[2] - delta
     if l > 0:
@@ -267,6 +269,7 @@ def decodeZigbeeTransitRequest(data):
     print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
     print(padText("Radius") + getHex(data[15],2))
     getSendOptions(data[16])
+    
     ds = ""
     l = (data[1] << 8) + data[2] - 14
     if l > 0:
@@ -667,17 +670,7 @@ def decodeZCLFrame(frameData):
 
     # Decode and display the frame control byte
     fc = frameData[0]
-    fcs = ""
-    for i in range(0,8):
-        if i == 1 or i > 4:
-            fcs = "0" + fcs
-            continue
-        v = int(math.pow(2,i))
-        if fc & v == v:
-            fcs = "1" + fcs
-        else:
-            fcs = "0" + fcs
-
+    fcs = getBinary(fc)
     print(padText("  Frame Control Byte") + getHex(fc,2) + " [b" + fcs + "]")
     
     if fc & 0x01 == 0x01:
@@ -950,20 +943,31 @@ def decodeZDO(data, cmd):
     # Returns:
     #   Nothing
      
+    cs = getZDOCommand(cmd)
+    if cs[0:8] != "[ERROR]":
+        print(padText("  ZDO command") + cs)
+    else:
+        print("[ERROR] ZDO command " + getHex(cmd,4) + " decoding not yet supported")
+        return
     print(padText("  Transaction seq. number") + getHex(data[0],2))
-    getZDOCommand(cmd)
+    
+    if cs[-8] == "Response":
+        # All responses have frame byte 1 set to status
+        getZDOStatus(data[1])
+    else:
+        # All responses after 0x0000 have bytes 1 and 2 as a 16-bit address
+        if cmd > 0x0000:
+            print(padText("  Address (16-bit)") + getHex(data[1] + (data[2] << 8),4))
 
     if cmd == 0x0000:
-        # Network Address Request
+        # 16-bit Network Address Request
         read64bitSserdda(data, 1)
         getZDOType(data[9])
-        
         if data[9] == 0x01:
             # Type value indicates an extended device response requested
             print(padText("  Start index") + getHex(data[10]))
-    elif cmd == 0x8000:
-        # Network Address Response
-        getZDOStatus(data[1])
+    elif cmd == 0x8000 or cmd == 0x8001:
+        # 16-bit Address Response / 64-bit Address Response
         read64bitSserdda(data, 2)
         print(padText("  Address (16-bit)") + getHex(data[10] + (data[11] << 8),4))
         
@@ -971,8 +975,26 @@ def decodeZDO(data, cmd):
             print(padText("  No. of addresses") + getHex(data[12],2))
             print(padText("  Start index") + getHex(data[13],2))
             count = 1
-            for i in range(14,14  + data[12] * 2,2):
-                print(padText("  Address" + str(count)) + getHex((data[i] << 8) + data[i + 1],4))
+            for i in range(14, 14 + data[12] * 2, 2):
+                print(padText("  Address" + str(count)) + getHex(data[i] + (data[i + 1] << 8),4))
+    elif cmd == 0x0001:
+        # 64-bit Address Request
+        getZDOType(data[3])
+        if data[3] == 0x01:
+            print(padText("  Start index") + getHex(data[10]))
+    elif cmd == 0x8002:
+        # Node Descriptor Response
+        getNodeDescriptor(data, 3)
+    elif cmd == 0x0004:
+        # Simple descriptor Request
+        print(padText("  Endpoint") + getHex(data[3],2))
+    elif cmd == 0x8004:
+        # Simple Descriptor Response
+        getSimpleDescriptor(data, 3)
+    elif cmd == 0x0013:
+        # ZDO Device Announce
+        read64bitSserdda(data, 3)
+        getDeviceCapability(data[11])
 
 
 ###########################################################################
@@ -1351,6 +1373,7 @@ def getZDOCommand(code):
           "Match Descriptor", 0x0006,
           "Complex Descriptor", 0x0010,
           "User Descriptor", 0x0011,
+          "Device Announce", 0x0013,
           "User Descriptor Set", 0x0014,
           "Management Network Discovery", 0x0030,
           "Management LQI (Neighbor Table)", 0x0031,
@@ -1360,7 +1383,8 @@ def getZDOCommand(code):
           "Management Network Update", 0x0038 ]
     
     for i in range(0, len(m), 2):
-        if code == m[i + 1]:
+        # Look at the lower bits for comparison
+        if code & 0x7FFF == m[i + 1]:
             # Append the appropriate message type
             if code > 0x8000:
                 return (m[i] + " Response")
@@ -1392,6 +1416,111 @@ def getZDOStatus(code):
     #   Nothing
     
     print(padText("  Response status") + getZCLAttributeStatus(code))
+
+
+def getNodeDescriptor(data, start):
+    # Display the ZDO Node Descriptor response
+    # Parameters:
+    #   1. Array - the packet data
+    #   2. Integer - the index of the start of the descriptor
+    # Returns:
+    #   Nothing
+    
+    # Node Descriptor Byte 1
+    logType = (data[start] & 0xE0) >> 5
+    getDeviceType(logType)
+    if data[start] & 0x10 == 0x10:
+        print(padText("  Complex descriptor available") + "Yes")
+    else:
+        print(padText("  Complex descriptor available") + "No")
+    if data[start] & 0x08 == 0x08:
+        print(padText("  User descriptor available") + "Yes")
+    else:
+        print(padText("  User descriptor available") + "No")
+
+    # Byte 2
+    s = getBinary(data[start + 1])
+    print(padText("  APS flags") + "b" + s[0:3])
+    m = ["868MHz", "R", "900MHz", "2.4GHz", "R"]
+    fs = ""
+    for i in range(3,8):
+        if s[i] == "1":
+            fs = m[i - 3]
+    if fs == "R":
+        fs = "[ERROR] Reserved band indicated"
+    print(padText("  Frequency band") + fs)
+
+    # Byte 3
+    s = getBinary(data[start + 2])
+    m = ["Alternate PAN Coordinator", "Device type", "Power source", "Receiver on when idle",         "R", "R", "Security capable", "allocate address"]
+    fs = ""
+    for i in range(0,8):
+        if s[i] == "1":
+            if m[i] == "R":
+                fs = fs + "Reserved function, "
+            else:
+                fs = fs + m[i] + ", "
+    print(padText("  MAC capabilities") + fs[0:-2])
+
+    # Bytes 4 and 5
+    print(padText("  Manufacturer ID") + getHex(data[start + 3] + (data[start + 4] << 8),4))
+
+    # Byte 6
+    print(padText("  Max. buffer size") + getHex(data[start + 5],2))
+
+    # Bytes 7 and 8
+    print(padText("  Max. incoming transfer size") + getHex(data[start + 6] + (data[start + 7] << 8)),4)
+
+    # Bytes 9 and 10
+    print(padText("  Server mask") + getHex(data[start + 8] + (data[start + 9] << 8)),4)
+
+    # Bytes 11 and 12
+    print(padText("  Max. outgoing transfer size") + getHex(data[start + 10] + (data[start + 11] << 8)),4)
+
+    # Byte 13
+    fs = ""
+    if data[start + 12] & 0x80 == 0x80:
+        fs = "Extended active endpoint list available, "
+    if data[start + 12] & 0x40 == 0x40:
+        fs = fs + "Extended simple descriptor list available, "
+    
+    if len(fs) > 0:
+        print(padText("  Descriptor capability field") + fs)
+    else:
+        print(padText("  Descriptor capability field") + "No bits set")
+
+
+def getSimpleDescriptor(data, start):
+    # Display the ZDO Simple Descriptor response
+    # Parameters:
+    #   1. Array - the packet data
+    #   2. Integer - the index of the start of the descriptor
+    # Returns:
+    #   Nothing
+
+    print(padText("  Endpoint") + getHex(data[start],2))
+    print(padText("  App profile ID") + getHex(data[start + 1] + (data[start + 2] << 8),4))
+    print(padText("  App device ID") + getHex(data[start + 3] + (data[start + 4] << 8),4))
+    print(padText("  App device version") + getHex((data[start + 5] >> 4),2))
+    
+    count = data[start + 6]
+    print(padText("  Input cluster count") + getHex(count,2))
+    if count != 0:
+        # Display the list of input clusters
+        fs = ""
+        for i in range (7, 7 + (count * 2), 2):
+            fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
+        print(padText("  Input clusters") + fs[0:-2])
+        start = start + (count * 2)
+    
+    count = data[start + 7]
+    print(padText("  Output cluster count") + getHex(count,2))
+    if count != 0:
+        # Display the list of output clusters
+        fs = ""
+        for i in range (7, 7 + (count * 2), 2):
+            fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
+        print(padText("  Output clusters") + fs[0:-2])
 
 
 def getDigitalChannelMask(data, start):
@@ -1503,7 +1632,6 @@ def getDeviceType(code):
     #   Nothing
 
     m = ["Coordinator", "Router", "End Device"]
-    
     if code < 0 or code > 2:
         print("[ERROR] Unknown Node Identification device type " + str(code))
     else:
@@ -1518,7 +1646,6 @@ def getSourceEvent(code):
     #   Nothing
 
     m = ["Pushbutton", "Joining", "Power-cycle"]
-    
     if code < 1 or code > 3:
         print("[ERROR] Unknown Node Identification event type " + str(code))
     else:
@@ -1534,7 +1661,6 @@ def getBootloaderMessage(code):
 
     m = ["ACK", 0x06, "NACK", 0x15, "No MAC ACK", 0x40,
          "Query - Bootload not active", 0x51, "Query response", 0x52]
-    
     for i in range(0, len(m), 2):
         if code == m[i + 1]:
             print(padText("Bootloader message") + m[i])
@@ -1574,6 +1700,23 @@ def padText(s, e = True):
     if e is True:
         t = t + ": "
     return t
+
+
+def getBinary(value):
+    # Convert an 8-bit value to a binary string of 1s and 0s
+    # Parameters:
+    #   1. Integer - the value to be converted
+    # Returns:
+    #   String
+    
+    bs = ""
+    for i in range(0,8):
+        bit = int(math.pow(2,i))
+        if value & bit == bit:
+            bs = "1" + bs
+        else:
+            bs = "0" + bs
+    return bs
 
 
 def showHelp():
