@@ -70,7 +70,7 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "0.0.2"
+APP_VERSION = "1.0.0"
 
 # ZCL Global Command names
 ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
@@ -85,6 +85,7 @@ ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes
 
 escaped = True
 debug = False
+prefixed = False
 
 
 ##########################################################################
@@ -208,6 +209,7 @@ def processPacket(packet):
     else:
         print("[ERROR] Unknown or not-yet-supported frame type: " + getHex(values[3],2))
         return
+    print(padText("Checksum") + getHex(checksum,2))
 
 
 ##########################################################################
@@ -951,21 +953,19 @@ def decodeZDO(data, cmd):
         return
     print(padText("  Transaction seq. number") + getHex(data[0],2))
     
-    if cs[-8] == "Response":
+    if cmd > 0x7FFF:
         # All responses have frame byte 1 set to status
         getZDOStatus(data[1])
     else:
         # All responses after 0x0000 have bytes 1 and 2 as a 16-bit address
-        if cmd > 0x0000:
+        if cmd > 0x0000 and cmd < 0x8000 and cmd != 0x0031 and cmd != 0x0038:
             print(padText("  Address (16-bit)") + getHex(data[1] + (data[2] << 8),4))
 
     if cmd == 0x0000:
         # 16-bit Network Address Request
         read64bitSserdda(data, 1)
         getZDOType(data[9])
-        if data[9] == 0x01:
-            # Type value indicates an extended device response requested
-            print(padText("  Start index") + getHex(data[10]))
+        print(padText("  Start index") + str(data[10]))
     elif cmd == 0x8000 or cmd == 0x8001:
         # 16-bit Address Response / 64-bit Address Response
         read64bitSserdda(data, 2)
@@ -973,21 +973,20 @@ def decodeZDO(data, cmd):
         
         if len(data) > 12:
             print(padText("  No. of addresses") + getHex(data[12],2))
-            print(padText("  Start index") + getHex(data[13],2))
+            print(padText("  Start index") + str(data[13]))
             count = 1
             for i in range(14, 14 + data[12] * 2, 2):
-                print(padText("  Address" + str(count)) + getHex(data[i] + (data[i + 1] << 8),4))
+                print(padText("  Address " + str(count)) + getHex(data[i] + (data[i + 1] << 8),4))
     elif cmd == 0x0001:
         # 64-bit Address Request
         getZDOType(data[3])
-        if data[3] == 0x01:
-            print(padText("  Start index") + getHex(data[10]))
+        print(padText("  Start index") + str(data[4]))
     elif cmd == 0x8002:
         # Node Descriptor Response
         getNodeDescriptor(data, 3)
     elif cmd == 0x0004:
         # Simple descriptor Request
-        print(padText("  Endpoint") + getHex(data[3],2))
+        print(padText("  Endpoint") + str(data[3]))
     elif cmd == 0x8004:
         # Simple Descriptor Response
         getSimpleDescriptor(data, 3)
@@ -995,7 +994,19 @@ def decodeZDO(data, cmd):
         # ZDO Device Announce
         read64bitSserdda(data, 3)
         getDeviceCapability(data[11])
-
+    elif cmd == 0x0031:
+        # Management LQI (Neighbor Table) Request
+        print(padText("  Start index") + str(data[1]))
+    elif cmd == 0x0038:
+        # Management Network Update Request
+        sd = data[5]
+        print(padText("  Scan Duration") + getHex(sd,2))
+        if sd < 6:
+            print(padText("  Scan Count") + getHex(data[6],2))
+        if sd == 0xFE:
+            print(padText("  Network update ID") + getHex(data[6],2))
+        if sd == 0xFF:
+            print(padText("  Network manager address") + getHex(data[6] + (data[7] << 8),2))
 
 ###########################################################################
 # This section comprises utility functions used by the primary decoders   #
@@ -1386,7 +1397,7 @@ def getZDOCommand(code):
         # Look at the lower bits for comparison
         if code & 0x7FFF == m[i + 1]:
             # Append the appropriate message type
-            if code > 0x8000:
+            if code > 0x7FFF:
                 return (m[i] + " Response")
             else:
                 return (m[i] + " Request")
@@ -1681,9 +1692,24 @@ def getHex(v, d):
     #   2. Integer - the number of characters the final string should comprise
     # Returns:
     #   String - the hex characters
-    
+
     s = "{:0" + str(d) + "X}"
     return s.format(v)
+
+
+def prefix(s):
+    # prefix-padding as required
+    # Parameters:
+    #   1. String - the source hex string
+    # Returns:
+    #   String - the hex string with or without a prefix
+    
+    global prefixed
+    
+    if prefixed is True:
+        return "0x" + s
+    else:
+        return s
 
 
 def padText(s, e = True):
@@ -1725,8 +1751,8 @@ def showHelp():
     print("  python xbp.py <XBee packet hex string>")
     print("\nThe XBee packet string must not contains spaces.\n")
     print("Options:")
-    print("  -e / --escape <true/false> - Use escaping when decoding packets")
-    print("  -d / --debug <true/false>  - Show extra debug information")
+    print("  -e / --escape <true/false> - Use escaping when decoding packets. Default: true")
+    print("  -d / --debug <true/false>  - Show extra debug information. Default: false")
     print("  -v / --version             - Show version information")
     print("  -h / --help                - Show help information")
 
@@ -1753,7 +1779,7 @@ if __name__ == '__main__':
                 showHelp()
                 i = i + 1
             elif c == "-e" or c == "--escape":
-                # Are we escaping
+                # Are we escaping?
                 if i < len(sys.argv) - 1:
                     v = sys.argv[i + 1]
                     if v == "true" or v == "yes" or v == "1":
@@ -1769,8 +1795,25 @@ if __name__ == '__main__':
                 else:
                     print("[ERROR] missing argument for -e/--escape")
                     sys.exit(0)
+            elif c == "-p" or c == "--prefix":
+                # Are we prefixing?
+                if i < len(sys.argv) - 1:
+                    v = sys.argv[i + 1]
+                    if v == "true" or v == "yes" or v == "1":
+                        prefixed = True
+                        print("Hex values will be prefixed with 0x")
+                    elif v == "false" or v == "no" or v == "0":
+                        prefixed = False
+                        print("Hex values will not be prefixed with 0x")
+                    else:
+                        print("[ERROR] bad argument for -e/--escape: " + v)
+                        sys.exit(0)
+                    i = i + 2
+                else:
+                    print("[ERROR] missing argument for -p/--prefix")
+                    sys.exit(0)
             elif c == "-d" or c == "--debug":
-                # Are we escaping
+                # Are we debugging?
                 if i < len(sys.argv) - 1:
                     v = sys.argv[i + 1]
                     if v == "true" or v == "yes" or v == "1":
