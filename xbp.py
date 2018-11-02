@@ -39,7 +39,8 @@ XBEE_CMD_NODE_ID_INDICATOR                  = 0x95
 XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97
 XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0
 XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1
-XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA2
+XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2
+XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3
 
 # ZCL Global Commands
 ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00
@@ -213,6 +214,8 @@ def processPacket(packet):
         decodeFirmwareUpdate(values) #DONE
     elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
         decodeRouteRecordIndicator(values) #DONE
+    elif cmd == XBEE_CMD_DEVICE_AUTH_INDICATOR:
+        decodeDeviceAuthIndicator(values)
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
         decodeManyToOneRouteIndicator(values) #DONE
     else:
@@ -274,10 +277,7 @@ def decodeZigbeeTransitRequest(data):
     # Returns:
     #   Nothing
 
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee transmit request\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    read64bitAddress(data, 5)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    printStandardHeader("Zigbee transmit request", data, 3)
     print(padText("Radius") + getHex(data[15],2))
     getSendOptions(data[16])
     
@@ -296,10 +296,7 @@ def decodeExplicitZigbeeCmdRequest(data):
     # Returns:
     #   Nothing
 
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Send Zigbee packet\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    read64bitAddress(data, 5)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    printStandardHeader("Send Zigbee packet", data, 3)
     print(padText("Source endpoint") + getHex(data[15],2))
     print(padText("Destination endpoint") + getHex(data[16],2))
     
@@ -334,10 +331,7 @@ def decodeRemoteCmdRequest(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Remote AT command request\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    read64bitAddress(data, 5)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    printStandardHeader("Remote AT command request", data, 3)
     getSendOptions(data[15])
     print(padText("XBee AT command") + "\"" + chr(data[16]) + chr(data[17]) + "\"")
     decodeATParamCommon(data, 18, 15, "Read request")
@@ -350,10 +344,7 @@ def decodeCreateSourceRouteRequest(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Remote AT command request\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    read64bitAddress(data, 5)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    printStandardHeader("Remote AT command request", data, 3)
     print(padText("Route Command Options") + getHex(data[15],2))
     
     n = data[16]
@@ -432,9 +423,7 @@ def decodeZigbeeReceivePacket(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee receive packet (basic)\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    printBasicHeader("Zigbee receive packet (basic)", data, 3)
     getPacketStatus(data[14])
     
     ds = ""
@@ -454,9 +443,7 @@ def decodeZigbeeRXIndicator(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee explicit RX indicator\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    printBasicHeader("Zigbee explicit RX indicator", data, 3)
     print(padText("Source endpoint") + getHex(data[14],2))
     print(padText("Destination endpoint") + getHex(data[15],2))
     
@@ -490,9 +477,7 @@ def decodeZigbeeDataSampleRXIndicator(data):
     # Returns:
     #   Nothing
 
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee IO data sample\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    printBasicHeader("Zigbee IO data sample", data, 3)
     getPacketStatus(data[14])
 
     print(padText("Number of samples") + getHex(data[15],2))
@@ -512,9 +497,7 @@ def decodeXBeeSensorReadIndicator(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"XBee sensor read indicator response\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    printBasicHeader("XBee sensor read indicator response", data, 3)
     getPacketStatus(data[14])
     getOneWireStatus(data[15])
     
@@ -550,9 +533,7 @@ def decodeNodeIDIndicator(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Node identification indicator response\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    printBasicHeader("Node identification indicator response", data, 3)
     getPacketStatus(data[14])
     print(padText("Address (16-bit)") + getHex(((data[15] << 8) + data[16]),4))
     read64bitAddress(data, 17)
@@ -587,10 +568,7 @@ def decodeRemoteATCommand(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Remote AT command response\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    read64bitAddress(data, 5)
-    print(padText("Address (16-bit)") + getHex(((data[13] << 8) + data[14]),4))
+    printStandardHeader("Remote AT command response", data, 3)
     print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
     getATStatus(data[17])
     
@@ -611,9 +589,7 @@ def decodeFirmwareUpdate(data):
     # Returns:
     #   Nothing
 
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"XBee firmware update\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    printBasicHeader("XBee firmware update", data, 3)
     getPacketStatus(data[14])
     getBootloaderMessage(data[15])
 
@@ -628,9 +604,7 @@ def decodeRouteRecordIndicator(data):
     # Returns:
     #   Nothing
 
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Route record indicator response\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
+    printBasicHeader("Route record indicator response", data, 3)
     getPacketStatus(data[14])
     
     n = data[15]
@@ -649,17 +623,53 @@ def decodeRouteRecordIndicator(data):
         sys.exit(0)
 
 
+def decodeDeviceAuthIndicator(data):
+    # The XBee has received a device-authenticated packet (frame ID 0xA2)
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    printBasicHeader("Device Authenticated Indicator", data, 3)
+    
+    
 def decodeManyToOneRouteIndicator(data):
-    # The Xbee has received a many-to-one routing info packet (frame ID 0xA2)
+    # The Xbee has received a many-to-one routing info packet (frame ID 0xA3)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + "\"Many-to-one route request indicator\"")
-    read64bitAddress(data, 4)
-    print(padText("Address (16-bit)") + getHex(((data[12] << 8) + data[13]),4))
-
+    printBasicHeader("Many-to-one routing information", data, 3)
+    
+    
+def printBasicHeader(cmd, data, start):
+    # Generic packet header decoding for a number of the above functions
+    # Parameters:
+    #   1. String - the command info to print
+    #   2. Array - the packet data
+    #   3. Integer - the start of the information in the frame data
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[start],2) + "\"" + cmd + "\"")
+    read64bitAddress(data, start + 1)
+    print(padText("Address (16-bit)") + getHex(((data[start + 9] << 8) + data[start + 10]),4))
+    
+    
+def printStandardHeader(cmd, data, start):
+    # Generic packet header decoding for a number of the above functions
+    # Parameters:
+    #   1. String - the command info to print
+    #   2. Array - the packet data
+    #   3. Integer - the start of the information in the frame data
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[start],2) + " \"" + cmd + "\"")
+    print(padText("XBee frame ID") + getHex(data[start + 1],2))
+    read64bitAddress(data, start + 2)
+    print(padText("Address (16-bit)") + getHex(((data[start + 10] << 8) + data[start + 11]),4))
+    
 
 ###########################################################################
 # This section comprises decoders for Zigbee data sent or received via an #
