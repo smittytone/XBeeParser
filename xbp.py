@@ -260,9 +260,9 @@ def decodeZigbeeTransitRequest(data):
     getSendOptions(data[16])
     
     ds = ""
-    l = (data[1] << 8) + data[2] - 14
+    length = (data[1] << 8) + data[2] - 14
     if l > 0:
-        for i in range(17, 17 + l):
+        for i in range(17, 17 + length):
             ds = ds + getHex(data[i],2)
         print(padText("Data bytes (" + str(l) + ")") + ds)
 
@@ -287,18 +287,14 @@ def decodeExplicitZigbeeCmdRequest(data):
     print(padText("Radius") + getHex(data[21],2))
     getSendOptions(data[22])
     
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 20
-    if l > 0:
-        for i in range(23, 23 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
+    length = (data[1] << 8) + data[2] - 20
+    dv = printFrameData(data, 23, length)
+    if len(dv) > 0:
         if pid == 0x0000:
             # ZDO operation
             decodeZDO(dv, cid)
         else:
+            # ZCL operation
             decodeZCLFrame(dv)
 
 
@@ -328,11 +324,11 @@ def decodeCreateSourceRouteRequest(data):
     n = data[16]
     print(padText("Number of addresses") + getHex(n,2))
 
-    l = (data[1] << 8) + data[2] - 14
+    length = (data[1] << 8) + data[2] - 14
     if l > 0:
         a = 0
         c = 1
-        for i in range(17, 17 + l, 2):
+        for i in range(17, 17 + length, 2):
             a = (data[i] << 8) + data[i + 1]
             print(padText("  Address " + str(c)) + getHex(a,4))
             c = c + 1
@@ -351,15 +347,9 @@ def decodeATResponse(data):
     cs = decodeATCommon(data, "Local AT command response")
     getATStatus(data[7])
     
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 5
-    if l > 0:
-        for i in range(8, 8 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
-    
+    length = (data[1] << 8) + data[2] - 5
+    dv = printFrameData(data, 8, length)
+
     # Trap ND packets
     if cs == "ND":
         decodeNIData(dv, 0)
@@ -386,12 +376,7 @@ def decodeZigbeeTransmitStatus(data):
     print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee transmit status\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("Address (16-bit)") + getHex(((data[5] << 8) + data[6]),4))
-    
-    if data[7] == 0:
-        print(padText("Retries") + "None")
-    else:
-        print(padText("Retries") + str(data[7]))
-
+    print(padText("Retries") + ("None" if data[7] == 0 else str(data[7])))
     getDeliveryStatus(data[8])
     getDiscoveryStatus(data[9])
 
@@ -406,14 +391,8 @@ def decodeZigbeeReceivePacket(data):
     printBasicHeader("Zigbee receive packet (basic)", data, 3)
     getPacketStatus(data[14])
     
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 12
-    if l > 0:
-        for i in range(15, 15 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
+    length = (data[1] << 8) + data[2] - 12
+    dv = printFrameData(data, 15, length)
 
 
 def decodeZigbeeRXIndicator(data):
@@ -435,15 +414,9 @@ def decodeZigbeeRXIndicator(data):
     
     getPacketStatus(data[20])
     
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 18
-    if l > 0:
-        for i in range(21, 21 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
-        
+    length = (data[1] << 8) + data[2] - 18
+    dv = printFrameData(data, 21, length)
+    if len(dv) > 0:
         if pid == 0x0000:
             decodeZDO(dv, cid)
         elif pid == 0xC105:
@@ -533,14 +506,8 @@ def decodeRemoteATCommand(data):
     print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
     getATStatus(data[17])
     
-    ds = ""
-    dv = []
-    l = (data[1] << 8) + data[2] - 15
-    if l > 0:
-        for i in range(18, 18 + l):
-            ds = ds + getHex(data[i],2)
-            dv.append(data[i])
-        print(padText("Frame data") + ds)
+    length = (data[1] << 8) + data[2] - 15
+    dv = printFrameData(data, 18, length)
 
 
 def decodeFirmwareUpdate(data):
@@ -674,6 +641,18 @@ def printStandardHeader(cmd, data, start):
     print(padText("Address (16-bit)") + getHex(((data[start + 10] << 8) + data[start + 11]),4))
     
 
+def printFrameData(data, start, length):
+        
+    ds = ""
+    dv = []
+    if length > 0:
+        for i in range(start, start + length):
+            ds = ds + getHex(data[i],2)
+            dv.append(data[i])
+        print(padText("Frame data") + ds)
+    return dv
+    
+    
 def decodeNIData(data, start):
     # Generic Node Ident data extrator
     # Parameters:
@@ -1819,10 +1798,7 @@ def getBinary(value):
     bs = ""
     for i in range(0,8):
         bit = int(math.pow(2,i))
-        if value & bit == bit:
-            bs = "1" + bs
-        else:
-            bs = "0" + bs
+        bs = ("1" if (value & bit) == bit else "0") + bs
     return bs
 
 
