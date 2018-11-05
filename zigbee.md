@@ -6,7 +6,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Byte i | 0/+1 | 0/+2 | +1/+3 | +2/+4 | +3/+5... |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| Frame&nbsp;Control | Manufacturer&nbsp;Code&nbsp;LSB | Manufacturer&nbsp;Code&nbsp;MSB | Transaction&nbsp;Sequence<br />Number | Command | Payload |
+| Frame&nbsp;Control | Manufacturer&nbsp;Code<br />LSB | Manufacturer&nbsp;Code<br />MSB | Transaction&nbsp;Sequence<br />Number | Command | Payload |
 
 ### Frame Control Field ###
 
@@ -26,7 +26,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 | Bit 2 | Meaning |
 | --- | :-- |
 | 0 | Not a manufacturer-specific command |
-| 1 | A manufacturer-specific commands, ie. Frame contains a Manufacturer Code  |
+| 1 | A manufacturer-specific commands, ie. frame contains a Manufacturer Code  |
 
 #### Direction Sub-field ####
 
@@ -46,20 +46,20 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Command | Description |
 | :-: | --- |
-| 0x00 | [Read Attributes](#read_attributes_request) |
-| 0x01 | Read Attributes Response |
-| 0x02 | Write Attributes |
-| 0x03 | Write Attributes Undivided |
-| 0x04 | Write Attributes Response |
-| 0x05 | Write Attributes No Response |
-| 0x06 | Configure Reporting |
-| 0x07 | Configure Reporting Response |
-| 0x08 | Read Reporting Configuration |
-| 0x09 | Read Reporting Configuration Response |
-| 0x0A | Report attributes |
-| 0x0B | Default Response |
-| 0x0C | Discover Attributes |
-| 0x0D | Discover Attributes Response |
+| 0x00 | [Read Attributes](#read-attributes-request) |
+| 0x01 | [Read Attributes Response](#read-attributes-response) |
+| 0x02 | [Write Attributes](#write-attributes-request) |
+| 0x03 | [Write Attributes Undivided](#write-attributes-request) |
+| 0x04 | [Write Attributes Response](#write-attributes-request) |
+| 0x05 | [Write Attributes No Response](#write-attributes-request) |
+| 0x06 | [Configure Reporting](#configure-reporting-request) |
+| 0x07 | [Configure Reporting Response](#configure-reporting-response) |
+| 0x08 | [Read Reporting Configuration](#read-reporting-configuration-request) |
+| 0x09 | [Read Reporting Configuration Response](#configure-reporting-response) |
+| 0x0A | [Report attributes](#report-attributes-request) |
+| 0x0B | [Default Response](#default-response) |
+| 0x0C | [Discover Attributes](#discover-attributes-request) |
+| 0x0D | [Discover Attributes Response](#discover-attributes-response) |
 | 0x0E | Read Attributes Structured |
 | 0x0F | Write Attributes Structured |
 | 0x10 | Write Attributes Structured response |
@@ -111,7 +111,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 ##### Attribute x Record #####
 
 | Octets: 2 | 1 | Variable |
-| :-: | :-: | :-: | :-: |
+| :-: | :-: | :-: |
 | Attribute ID | Data Type | Value |
 
 #### Configure Reporting Request ####
