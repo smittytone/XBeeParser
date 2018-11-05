@@ -834,7 +834,7 @@ def decodeAttribute(data, start):
     
     print(padText("  Attribute ID") + getHex(((data[index] << 8) + data[index + 1]), 4))
     print(padText("  Attribute read status") + getZCLAttributeStatus(data[index + 2]))
-    print(padText("  Attribute type") + getZCLAttributeType(data[index + 2]))
+    print(padText("  Attribute type") + getZCLAttributeType(data[index + 3]))
     
     if data[index + 2] == 0:
         # Now get the attribute data
@@ -891,7 +891,7 @@ def decodeValue(data, start, dataType):
         for j in range(start + size - 1, start - 1 , -1):
             v = v + (data[j] << k)
             k = k + 8
-        print(padText("  Attribute value") + getHex(v,l))
+        print(padText("  Attribute value") + getHex(v,size))
     return size
 
 
