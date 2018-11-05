@@ -45,7 +45,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 ### Global Commands ###
 
 | Command | Description |
-| :-: | --- |
+| :-: | :-- |
 | 0x00 | [Read Attributes](#read-attributes-request) |
 | 0x01 | [Read Attributes Response](#read-attributes-response) |
 | 0x02 | [Write Attributes](#write-attributes-request) |
@@ -60,15 +60,15 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 | 0x0B | [Default Response](#default-response) |
 | 0x0C | [Discover Attributes](#discover-attributes-request) |
 | 0x0D | [Discover Attributes Response](#discover-attributes-response) |
-| 0x0E | Read Attributes Structured |
-| 0x0F | Write Attributes Structured |
-| 0x10 | Write Attributes Structured response |
-| 0x11 | Discover Commands Received |
-| 0x12 | Discover Commands Received Response |
-| 0x13 | Discover Commands Generated |
-| 0x14 | Discover Commands Generated Response |
-| 0x15 | Discover Attributes Extended |
-| 0x16 | Discover Attributes Extended Response |
+| 0x0E | [Read Attributes Structured](#read-attributes-structured-request) |
+| 0x0F | [Write Attributes Structured](#write-attributes-structured-request) |
+| 0x10 | [Write Attributes Structured response](#write-attributes-structured-response) |
+| 0x11 | [Discover Commands Received](#discover-commands-received-request) |
+| 0x12 | [Discover Commands Received Response](#discover-commands-received-response) |
+| 0x13 | [Discover Commands Generated](#discover-commands-received-request) |
+| 0x14 | [Discover Commands Generated Response](#discover-commands-received-response) |
+| 0x15 | [Discover Attributes Extended](#discover-attributes-extended-request) |
+| 0x16 | [Discover Attributes Extended Response](#discover-attributes-extended-response) |
 
 #### Read Attributes Request ###
 
@@ -186,3 +186,85 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 | Octets: 1 | 1 | 1 |
 | :-: | :-: | :-: |
 | Attribute ID<br />LSB | Attribute ID<br />MSB | Data Type |
+
+#### Read Attributes Structured Request ####
+
+| Octets: Variable | 1 | 1 | Variable | ... | 1 | 1 | Variable |
+| :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| ZCL Header | Attribute 1 ID<br />LSB | Attribute 1 ID<br />MSB | Selector | ... | Attribute n ID<br />LSB | Attribute n ID<br />MSB | Selector |
+
+##### Selector Record #####
+
+| Octets: 1 | 1 | 1 | ... | 1 | 1 |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| Indicator (m) | Index 1<br />LSB | Index 1<br />MSB | ... | Index m<br />LSB | Index m<br />MSB |
+
+#### Write Attributes Structured Request #### 
+
+| Octets: Variable | Variable | Variable | ... | Variable |
+| :-: | :-: | :-: | :-: | :-: |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+
+##### Attribute x Record #####
+
+| Octets: 1 | 1 | Variable | 1 | Variable |
+| :-: | :-: | :-: | :-: | :-: |
+| Attribute ID<br />LSB | Attribute ID<br />MSB | Selector | Data Type | Value |
+
+##### Selector Record #####
+
+| Octets: 1 | 1 | 1 | ... | 1 | 1 |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| Indicator (m) | Index 1<br />LSB | Index 1<br />MSB | ... | Index m<br />LSB | Index m<br />MSB |
+
+#### Write Attributes Structured Response ####
+
+| Octets: Variable | Variable | Variable | ... | Variable |
+| :-: | :-: | :-: | :-: | :-: |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+
+##### Attribute x Record #####
+
+| Octets: 1 | 1 | 1 | Variable |
+| :-: | :-: | :-: | :-: |
+| Status | Attribute ID<br />LSB | Attribute ID<br />MSB | Selector |
+
+#### Discover Commands Received Request ####
+#### Discover Commands Generated Request ####
+
+| Octets: Variable | 1 | 1 |
+| :-: | :-: | :-: |
+| ZCL Header | Start Command ID | Max. Command IDs<br />to be returned |
+
+#### Discover Commands Received Response ####
+#### Discover Commands Generated Response ####
+
+| Octets: Variable | 1 | 1 | 1 | ... | 1 |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| ZCL Header | Discovery complete | Command 1 | Command 2 | ... | Command n |
+
+#### Discover Attributes Extended Request ####
+
+| Octets: Variable | 1 | 1 | 1 |
+| :-: | :-: | :-: | :-: |
+| ZCL Header | Start Attribute ID<br />LSB | Start Attribute ID<br />MSB | Max. Attribute IDs<br />to be returned |
+
+#### Discover Attributes Extended Response ####
+
+| Octets: Variable | 1 | 4 | 4 | ... | 4 |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| ZCL Header | Discovery complete | Attribute 1<br />Extended Info | Attribute 2<br />Extended Info | ... | Attribute n<br />Extended Info |
+
+##### Extended Info #####
+
+| Octets: 1 | 1 | 1 | 1 |
+| :-: | :-: | :-: | :-: |
+| Attribute ID<br />LSB | Attribute ID<br />MSB | Data Type | Attribute Access<br />Control |
+
+##### Attribute Access Control #####
+
+| Bit 7(0) | Bit 6(1) | Bit 5(2) | ... |
+| :-: | :-: | :-: |
+| Readable | Writeable | Reportable | Ignored |
+
+**Note** Bits in the bitfield are in little endian order (shown in brackets)
