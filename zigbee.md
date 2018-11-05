@@ -4,7 +4,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 ## General ZCL Frame Format ##
 
-| Byte i | 0/+1 | 0/+2 | +1/+3 | +2/+4 | +3/+5... |
+| Byte i | i+0/+1 | i+0/+2 | i+1/+3 | i+2/+4 | i+3/+5... |
 | :-: | :-: | :-: | :-: | :-: | :-: |
 | Frame&nbsp;Control | Manufacturer&nbsp;Code<br />LSB | Manufacturer&nbsp;Code<br />MSB | Transaction&nbsp;Sequence<br />Number | Command | Payload |
 
