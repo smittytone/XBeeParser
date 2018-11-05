@@ -74,31 +74,31 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 1 | 1 | ... | 1  | 1 |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute ID 1<br />LSB | Attribute ID 1<br />MSB | ... | Attribute ID n<br />LSB | Attribute ID n<br />MSB |  
+| ZCL Header | Attribute ID 1<br />LSB | Attribute ID 1<br />MSB | ... | Attribute ID *n*<br />LSB | Attribute ID *n*<br />MSB |  
 
 #### Read Attributes Response ####
 
 | Octets: Variable | Variable | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
 | Octets: 2 | 1 | 0/1 | 0/Variable |
 | :-: | :-: | :-: | :-: |
-| Attribute ID | Status | Data Type<br />(is status == SUCCESS) | Value<br />(is status == SUCCESS) |
+| Attribute ID | Status | Data Type<br />(if *status* == SUCCESS) | Value<br />(if *status* == SUCCESS) |
 
 ##### Value Field - Type: Array, Set, Bag #####
 
 | Octets: 1 | 1 | 1 | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| Type | No. of Elements<br />LSB | No. of Elements<br />MSB | Element 1 Value | ... | Element m Value |
+| Type | No. of Elements<br />LSB | No. of Elements<br />MSB | Element 1 Value | ... | Element *m* Value |
 
 ##### Value Field - Type: Structure #####
 
 | Octets: 1 | 1 | 1 | Variable | ... | 1 | Variable |
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| No. of Elements<br />LSB | No. of Elements<br />MSB | Element 1 Type | Element 1 Value | ... | Element m Type | Element m Value |
+| No. of Elements<br />LSB | No. of Elements<br />MSB | Element 1 Type | Element 1 Value | ... | Element *m* Type | Element *m* Value |
 
 #### Write Attributes Request ####
 #### Write Attributes Undivided Request ####
@@ -106,7 +106,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | Variable | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -118,7 +118,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | Variable | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -131,7 +131,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 4 | 4 | ... | 4 |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -143,7 +143,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 3 | 3 | ... | 3 |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -155,7 +155,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | Variable | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -179,7 +179,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 1 | 3 | 3 | ... | 3 |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Discovery complete | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Discovery complete | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -191,19 +191,19 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 1 | 1 | Variable | ... | 1 | 1 | Variable |
 | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 ID<br />LSB | Attribute 1 ID<br />MSB | Selector | ... | Attribute n ID<br />LSB | Attribute n ID<br />MSB | Selector |
+| ZCL Header | Attribute 1 ID<br />LSB | Attribute 1 ID<br />MSB | Selector | ... | Attribute *n* ID<br />LSB | Attribute *n* ID<br />MSB | Selector |
 
 ##### Selector Record #####
 
 | Octets: 1 | 1 | 1 | ... | 1 | 1 |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| Indicator (m) | Index 1<br />LSB | Index 1<br />MSB | ... | Index m<br />LSB | Index m<br />MSB |
+| Indicator (m) | Index 1<br />LSB | Index 1<br />MSB | ... | Index *m*<br />LSB | Index *m*<br />MSB |
 
 #### Write Attributes Structured Request #### 
 
 | Octets: Variable | Variable | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -215,13 +215,13 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: 1 | 1 | 1 | ... | 1 | 1 |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| Indicator (m) | Index 1<br />LSB | Index 1<br />MSB | ... | Index m<br />LSB | Index m<br />MSB |
+| Indicator (m) | Index 1<br />LSB | Index 1<br />MSB | ... | Index *m*<br />LSB | Index *m*<br />MSB |
 
 #### Write Attributes Structured Response ####
 
 | Octets: Variable | Variable | Variable | ... | Variable |
 | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute n |
+| ZCL Header | Attribute 1 | Attribute 2 | ... | Attribute *n* |
 
 ##### Attribute x Record #####
 
@@ -241,7 +241,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 1 | 1 | 1 | ... | 1 |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Discovery complete | Command 1 | Command 2 | ... | Command n |
+| ZCL Header | Discovery complete | Command 1 | Command 2 | ... | Command *n* |
 
 #### Discover Attributes Extended Request ####
 
@@ -253,7 +253,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 
 | Octets: Variable | 1 | 4 | 4 | ... | 4 |
 | :-: | :-: | :-: | :-: | :-: | :-: |
-| ZCL Header | Discovery complete | Attribute 1<br />Extended Info | Attribute 2<br />Extended Info | ... | Attribute n<br />Extended Info |
+| ZCL Header | Discovery complete | Attribute 1<br />Extended Info | Attribute 2<br />Extended Info | ... | Attribute *n*<br />Extended Info |
 
 ##### Extended Info #####
 
