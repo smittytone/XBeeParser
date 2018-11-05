@@ -2,7 +2,7 @@
 
 ##########################################################################
 #                                                                        #
-# XBeeParser 1.0.0                                                       #
+# XBeeParser 1.0.1                                                       #
 # Copyright 2018, Tony Smith (@smittytone)                               #
 # License: MIT (terms attached to this repo)                             #
 #                                                                        #
@@ -80,7 +80,7 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.0.1"
 
 # ZCL Global Command names
 ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
