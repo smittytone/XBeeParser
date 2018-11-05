@@ -264,7 +264,7 @@ Being a selection of tables outlining key aspects of the ZCL data structure.
 ##### Attribute Access Control #####
 
 | Bit 7(0) | Bit 6(1) | Bit 5(2) | ... |
-| :-: | :-: | :-: |
+| :-: | :-: | :-: | :-: |
 | Readable | Writeable | Reportable | Ignored |
 
 **Note** Bits in the bitfield are in little endian order (shown in brackets)
