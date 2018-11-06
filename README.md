@@ -107,12 +107,16 @@ Checksum                      : 6E
 ## Release Notes ##
 
 - 1.0.2
+    - Add Discover Commands Received, Discover Commands Generated request decoders
+    - Add Discover Commands Received, Discover Commands Generated response decoders
     - Update help, version info
+    - Fix little endian byte order on ZCL frame decoders
 - 1.0.1 *November 5, 2018*
     - Fix incorrect attribute type display
     - Fix attribute value display bug
 - 1.0.0 *November 2, 2018*
     - Initial release
+
 ## Licence and Copyright ##
 
 XBeeParser's source code is issued under the [MIT license](LICENSE).

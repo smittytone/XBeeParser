@@ -20,35 +20,35 @@ import sys, math
 ##########################################################################
 
 # XBee Request Commands
-XBEE_CMD_AT                                 = 0x08
-XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09
-XBEE_CMD_ZIGBEE_TRANSMIT_REQ                = 0x10
-XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME          = 0x11
-XBEE_CMD_REMOTE_CMD_REQ                     = 0x17
-XBEE_CMD_CREATE_SOURCE_ROUTE                = 0x21
+XBEE_CMD_AT                                 = 0x08 #DONE
+XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09 #DONE
+XBEE_CMD_ZIGBEE_TRANSMIT_REQ                = 0x10 #DONE
+XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME          = 0x11 #DONE
+XBEE_CMD_REMOTE_CMD_REQ                     = 0x17 #DONE
+XBEE_CMD_CREATE_SOURCE_ROUTE                = 0x21 #DONE
 
 # XBee Response Frame IDs
-XBEE_CMD_AT_RESPONSE                        = 0x88
-XBEE_CMD_MODEM_STATUS                       = 0x8A
-XBEE_CMD_ZIGBEE_TRANSMIT_STATUS             = 0x8B
-XBEE_CMD_ZIGBEE_RECEIVE_PACKET              = 0x90
-XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR            = 0x91
-XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92
-XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94
-XBEE_CMD_NODE_ID_INDICATOR                  = 0x95
-XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97
-XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0
-XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1
-XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2
-XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3
+XBEE_CMD_AT_RESPONSE                        = 0x88 #DONE
+XBEE_CMD_MODEM_STATUS                       = 0x8A #DONE
+XBEE_CMD_ZIGBEE_TRANSMIT_STATUS             = 0x8B #DONE
+XBEE_CMD_ZIGBEE_RECEIVE_PACKET              = 0x90 #DONE
+XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR            = 0x91 #DONE
+XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92 #DONE
+XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94 #DONE
+XBEE_CMD_NODE_ID_INDICATOR                  = 0x95 #DONE
+XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97 #DONE
+XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0 #DONE
+XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1 #DONE
+XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2 #DONE
+XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3 #DONE
 
 # ZCL Global Commands
-ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00
-ZCL_GLOBAL_CMD_READ_ATTR_RSP                = 0x01
-ZCL_GLOBAL_CMD_WRITE_ATTR_REQ               = 0x02
-ZCL_GLOBAL_CMD_WRITE_ATTR_UND               = 0x03
-ZCL_GLOBAL_CMD_WRITE_ATTR_RSP               = 0x04
-ZCL_GLOBAL_CMD_WRITE_ATTR_NO                = 0x05
+ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00 #DONE
+ZCL_GLOBAL_CMD_READ_ATTR_RSP                = 0x01 #DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_REQ               = 0x02 #DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_UND               = 0x03 #DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_RSP               = 0x04 #DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_NO                = 0x05 #DONE
 ZCL_GLOBAL_CMD_CONF_REPT_REQ                = 0x06
 ZCL_GLOBAL_CMD_CONF_REPT_RSP                = 0x07
 ZCL_GLOBAL_CMD_READ_REPT_REQ                = 0x08
@@ -60,10 +60,10 @@ ZCL_GLOBAL_CMD_DISC_ATTR_RSP                = 0x0D
 ZCL_GLOBAL_CMD_READ_ATTR_STR_REQ            = 0x0E
 ZCL_GLOBAL_CMD_WRITE_ATTR_STR_REQ           = 0x0F
 ZCL_GLOBAL_CMD_WRITE_ATTR_STR_RSP           = 0x10
-ZCL_GLOBAL_CMD_DISC_RCMDS_REQ               = 0x11
-ZCL_GLOBAL_CMD_DISC_RCMDS_RSP               = 0x12
-ZCL_GLOBAL_CMD_DISC_GCMDS_REQ               = 0x13
-ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14
+ZCL_GLOBAL_CMD_DISC_RCMDS_REQ               = 0x11 #DONE
+ZCL_GLOBAL_CMD_DISC_RCMDS_RSP               = 0x12 #DONE
+ZCL_GLOBAL_CMD_DISC_GCMDS_REQ               = 0x13 #DONE
+ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14 #DONE
 ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ            = 0x15
 ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16
 
@@ -86,7 +86,10 @@ APP_VERSION = "1.0.2"
 ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
                 "Write Attributes Response", "Write Attributes No Response", "Configure Reporting", "Configure Reporting Response",
                 "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
-                "Discover Attributes", "Discover Attributes Response"]
+                "Discover Attributes", "Discover Attributes Response", "Read Attributes Structured", "Write Attributes Structured",
+                "Write Attributes Structured Response", "Discover Commands Received", "Discover Commands Received Response",
+                "Discover Commands Generated", "Discover Commands Generated Response", "Discover Attributes Extended",
+                "Discover Attributes Extended Response"]
 
 
 ##########################################################################
@@ -181,43 +184,43 @@ def processPacket(packet):
     # Look for XBee frame types and decode the data individually
     cmd = values[3]
     if cmd == XBEE_CMD_AT:
-        decodeSendATCommand(values) #DONE
+        decodeSendATCommand(values)
     elif cmd == XBEE_CMD_QUEUE_PARAM_VALUE:
-        decodeParamQueueRequest(values) #DONE
+        decodeParamQueueRequest(values)
     elif cmd == XBEE_CMD_ZIGBEE_TRANSMIT_REQ:
-        decodeZigbeeTransitRequest(values) #DONE
+        decodeZigbeeTransitRequest(values)
     elif cmd == XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME:
-        decodeExplicitZigbeeCmdRequest(values) #DONE
+        decodeExplicitZigbeeCmdRequest(values)
     elif cmd == XBEE_CMD_REMOTE_CMD_REQ:
-        decodeRemoteCmdRequest(values) #DONE
+        decodeRemoteCmdRequest(values)
     elif cmd == XBEE_CMD_CREATE_SOURCE_ROUTE:
-        decodeCreateSourceRouteRequest(values) #DONE
+        decodeCreateSourceRouteRequest(values)
     elif cmd == XBEE_CMD_AT_RESPONSE:
-        decodeATResponse(values) #DONE
+        decodeATResponse(values)
     elif cmd == XBEE_CMD_MODEM_STATUS:
-        decodeModemStatus(values) #DONE
+        decodeModemStatus(values)
     elif cmd == XBEE_CMD_ZIGBEE_TRANSMIT_STATUS:
-        decodeZigbeeTransmitStatus(values) #DONE
+        decodeZigbeeTransmitStatus(values)
     elif cmd == XBEE_CMD_ZIGBEE_RECEIVE_PACKET:
-        decodeZigbeeReceivePacket(values) #DONE
+        decodeZigbeeReceivePacket(values)
     elif cmd == XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR:
-        decodeZigbeeRXIndicator(values) #DONE
+        decodeZigbeeRXIndicator(values)
     elif cmd == XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR:
-        decodeZigbeeDataSampleRXIndicator(values) #DONE
+        decodeZigbeeDataSampleRXIndicator(values)
     elif cmd == XBEE_CMD_XBEE_SENSOR_READ_INDICATOR:
-        decodeXBeeSensorReadIndicator(values) #DONE
+        decodeXBeeSensorReadIndicator(values)
     elif cmd == XBEE_CMD_NODE_ID_INDICATOR:
-        decodeNodeIDIndicator(values) #DONE
+        decodeNodeIDIndicator(values)
     elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
-        decodeRemoteATCommand(values) #DONE
+        decodeRemoteATCommand(values)
     elif cmd == XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS:
-        decodeFirmwareUpdate(values) #DONE
+        decodeFirmwareUpdate(values)
     elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
-        decodeRouteRecordIndicator(values) #DONE
+        decodeRouteRecordIndicator(values)
     elif cmd == XBEE_CMD_DEVICE_AUTH_INDICATOR:
-        decodeDeviceAuthIndicator(values) #DONE
+        decodeDeviceAuthIndicator(values)
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
-        decodeManyToOneRouteIndicator(values) #DONE
+        decodeManyToOneRouteIndicator(values)
     else:
         print("[ERROR] Unknown or not-yet-supported frame type: " + getHex(values[3],2))
         return
@@ -603,9 +606,9 @@ def decodeATParamCommon(data, startIndex, delta, noParamMessage):
     # Returns:
     #   Nothing
     ds = ""
-    l = (data[1] << 8) + data[2] - delta
-    if l > 0:
-        for i in range(startIndex, startIndex + l):
+    length = (data[1] << 8) + data[2] - delta
+    if length > 0:
+        for i in range(startIndex, startIndex + length):
             ds = ds + getHex(data[i],2)
     else:
         ds = noParamMessage
@@ -692,6 +695,8 @@ def decodeNIData(data, start):
 # This section comprises decoders for Zigbee data sent or received via an #
 # XBee. This covers Zigbee Cluster Library (ZCL) frames, and Zigbee       #
 # Device Objects (ZDO) entities                                           #
+# NOTE Multi-byte ZCL frame entities are stored in little endian order,   #
+#      ie. LSB first, MSB last                                                     #
 ###########################################################################
 
 def decodeZCLFrame(frameData):
@@ -735,7 +740,7 @@ def decodeZCLFrame(frameData):
     
     index = 1
     if manSpec is True:
-        mc = (frameData[1] << 8) + frameData[2]
+        mc = frameData[1] +(frameData[2] << 8)
         print(padText("  Manufacturer code") + getHex(mc,4))
         index = 3
     
@@ -768,13 +773,17 @@ def decodeZCLCommand(cmd, data, start):
     # Jump table for general ZCL commands
     
     if cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
-        decodeZCLReadAttributeReq(data, start) #DONE
+        decodeZCLReadAttributeReq(data, start)
     elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP or cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_NO:
-        decodeAttributeList(data, start, ATT_TYPE_READ_RSP) #DONE
+        decodeAttributeList(data, start, ATT_TYPE_READ_RSP)
     elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_REQ or cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_UND:
-        decodeAttributeList(data, start, ATT_TYPE_WRITE_REQ) #DONE
+        decodeAttributeList(data, start, ATT_TYPE_WRITE_REQ)
     elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
-        decodeAttributeList(data, start, ATT_TYPE_WRITE_RSP) #DONE
+        decodeAttributeList(data, start, ATT_TYPE_WRITE_RSP)
+    elif cmd == ZCL_GLOBAL_CMD_DISC_RCMDS_REQ or cmd == ZCL_GLOBAL_CMD_DISC_GCMDS_REQ:
+        decodeCommandsReq(data, start)
+    elif cmd == ZCL_GLOBAL_CMD_DISC_RCMDS_RSP or cmd == ZCL_GLOBAL_CMD_DISC_GCMDS_RSP:
+        decodeCommandsRsp(data, start)
     else:
         print("  [ERROR] General command " + getHex(cmd,2) + " not yet supported by this program")
 
@@ -832,7 +841,7 @@ def decodeAttribute(data, start):
     
     index = start
     
-    print(padText("  Attribute ID") + getHex(((data[index] << 8) + data[index + 1]), 4))
+    print(padText("  Attribute ID") + getHex(data[index] + (data[index + 1] << 8), 4))
     print(padText("  Attribute read status") + getZCLAttributeStatus(data[index + 2]))
     print(padText("  Attribute type") + getZCLAttributeType(data[index + 3]))
     
@@ -916,7 +925,7 @@ def decodeCollection(data, start, dataType):
         index = index + 1 + length
     elif dataType == 0x43 or dataType == 0x44:
         # Long octet or char string
-        length = (data[index] << 8) + data[index + 1]
+        length = data[index] + (data[index + 1] << 8)
         ds = ""
         for j in range(index + 2, index + 2 + length):
             ds = ds + chr(data[j])
@@ -928,7 +937,7 @@ def decodeCollection(data, start, dataType):
         length = 0
         subType = data[index]
         size = getZCLAttributeSize(data[subType])
-        itemCount = (data[index + 1] << 8) + data[index + 2]
+        itemCount = data[index + 1] + (data[index + 2] << 8)
         for j in range(0, itemCount):
             # NOTE decodeAttribute() expects to receive the start of the attribute
             #      (ie. header + data) not the start of a collection sub-attribute
@@ -939,13 +948,13 @@ def decodeCollection(data, start, dataType):
             length = length + decodeAttributeData(data, adjustedIndex, subType)
         index = index + 3 + length
     elif type == 0x52:
-        # Struct - collection of mixed types, os this is more complex 
-        itemCount = (data[index] << 8) + data[index + 1]
+        # Structure - collection of mixed types, so this is more complex 
+        itemCount = data[index] + (data[index + 1] << 8)
         length = 0
         itemLength = 0
         for j in range(0, itemCount):
             adjustedIndex = index + 2 + itemLength
-            subType = data[adjustedIndex];
+            subType = data[adjustedIndex]
             itemLength = 1 + decodeAttributeData(data, adjustedIndex + 1, subType)
             length = length + itemLength
         index = index + 2 + length
@@ -961,7 +970,7 @@ def decodeAttributeWriteReq(data, start):
     #   The index of the next attribute in the data
     
     index = start
-    print(padText("  Attribute ID") + getHex(((data[index] << 8) + data[index + 1]), 4))
+    print(padText("  Attribute ID") + getHex(data[index] + (data[index + 1] << 8), 4))
     print(padText("  Attribute type") + getZCLAttributeType(data[index + 2]))
     index = index + 3 + decodeAttributeData(data, index + 3, data[index + 2])
     return index
@@ -976,9 +985,36 @@ def decodeAttributeWriteRsp(data, start):
     # Returns:
     #   The number of bytes of data read (ie. how far to move the pointer)
 
-    print(padText("  Attribute ID") + getHex(((data[start + 1] << 8) + data[start + 2]), 4))
+    print(padText("  Attribute ID") + getHex(data[start] + (data[start + 1] << 8), 4))
     print(padText("  Attribute write status") + getZCLAttributeStatus(data[start]))
     return start + 3
+
+
+def decodeCommandsReq(data, start):
+    # Get Received or Generated Commands
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute data within 
+    #                the ZCL frame, not the start of the attribute record
+    # Returns:
+    #   Nothing
+
+    print(padText("  First command ID") + getHex(data[start] + (data[start + 1] << 8), 4))
+    print(padText("  Max. command IDs returned") + str(data[start + 2]))
+
+
+def decodeCommandsRsp(data, start):
+    # Get Received or Generated Commands
+    # Parameters:
+    #   1. Array - the frame data as a series of integer values
+    #   2. Integer - index of the start of the attribute data within 
+    #                the ZCL frame, not the start of the attribute record
+    # Returns:
+    #   Nothing
+
+    print(padText("  Command discovery complete?") + ("No" if data[start] == 0 else "Yes"))
+    for i in range(start + 1, len(data)):
+        print(padText("  Command ID " + str(i - start)) + getHex(data[i], 2))
 
 
 def decodeZDO(data, cmd):
@@ -1800,6 +1836,14 @@ def getBinary(value):
         bit = int(math.pow(2,i))
         bs = ("1" if (value & bit) == bit else "0") + bs
     return bs
+
+
+def decodeEndian(valueArray, isLittleEndian = True):
+    if isLittleEndian is True:
+        return (valueArray[0] + (valueArray[1] << 8))
+    else:
+        return ((valueArray[0] << 8) + valueArray[1])
+
 
 
 def showHelp():
