@@ -591,10 +591,10 @@ def decodeJoinNotification(data):
     
     print(padText("XBee command ID") + getHex(data[3],2) + " \"Join notification status\"")
     print("Parent:")
-    print(padText("Address (16-bit)") + getHex(((data[4] << 8) + data[5]),4))
+    print(padText("  Address (16-bit)") + getHex(((data[4] << 8) + data[5]),4))
     print("Joining Device:")
-    print(padText("Address (16-bit)") + getHex(((data[6] << 8) + data[7]),4))
-    read64bitAddress(data, 8)
+    print(padText("  Address (16-bit)") + getHex(((data[6] << 8) + data[7]),4))
+    read64bitAddress(data, 8, "  Address (64-bit)")
     getJoinStatus(data[16])
 
 
@@ -620,6 +620,7 @@ def decodeATCommon(data, cmd, noParamMessage = ""):
     if len(noParamMessage) > 0:
         decodeATParamCommon(data, 7, 4, noParamMessage)
     return cs
+
 
 def decodeATParamCommon(data, startIndex, delta, noParamMessage):
     # Code used by the above function
@@ -1290,7 +1291,7 @@ def getDeliveryStatus(code):
          0x01, "MAC ACK failure",
          0x02, "CCA failure",
          0x03, "Packet not transmitted and purged",
-         0x04, "Physical error on the interface"
+         0x04, "Physical error on the interface",
          0x15, "Invalid destination endpoint",
          0x18, "No buffers available",
          0x21, "Network ACK failure",
@@ -1303,7 +1304,7 @@ def getDeliveryStatus(code):
          0x2C, "Invalid endpoint",
          0x2D, "Attempted broadcast with APS transmission",
          0x2E, "Attempted unicast with APS transmission, but EE=0",
-         0x31, "Software error occurred"
+         0x31, "Software error occurred",
          0x32, "Resource error: lack of free buffers, timers etc.",
          0x74, "Data payload too large",
          0x75, "Indirect message unrequested",
