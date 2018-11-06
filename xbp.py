@@ -25,7 +25,9 @@ XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09 #DONE
 XBEE_CMD_ZIGBEE_TRANSMIT_REQ                = 0x10 #DONE
 XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME          = 0x11 #DONE
 XBEE_CMD_REMOTE_CMD_REQ                     = 0x17 #DONE
+XBEE_CMD_REMOTE_CMD_SECURE_REQ              = 0x18
 XBEE_CMD_CREATE_SOURCE_ROUTE                = 0x21 #DONE
+XBEE_CMD_REGISTER_DEVICE_JOIN               = 0x24
 
 # XBee Response Frame IDs
 XBEE_CMD_AT_RESPONSE                        = 0x88 #DONE
@@ -37,10 +39,13 @@ XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92 #DONE
 XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94 #DONE
 XBEE_CMD_NODE_ID_INDICATOR                  = 0x95 #DONE
 XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97 #DONE
+XBEE_CMD_EXTENDED_MODEM_STATUS              = 0x98
 XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0 #DONE
 XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1 #DONE
 XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2 #DONE
 XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3 #DONE
+XBEE_CMD_REGISTER_DEVICE_JOIN_STATUS        = 0xA4
+XBEE_CMD_JOIN_NOTIFICATION_STATUS           = 0xA5
 
 # ZCL Global Commands
 ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00 #DONE
@@ -221,6 +226,8 @@ def processPacket(packet):
         decodeDeviceAuthIndicator(values)
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
         decodeManyToOneRouteIndicator(values)
+    elif cmd == XBEE_CMD_JOIN_NOTIFICATION_STATUS:
+        decodeJoinNotification(values)
     else:
         print("[ERROR] Unknown or not-yet-supported frame type: " + getHex(values[3],2))
         return
@@ -263,11 +270,13 @@ def decodeZigbeeTransitRequest(data):
     getSendOptions(data[16])
     
     ds = ""
+    ps = ""
     length = (data[1] << 8) + data[2] - 14
-    if l > 0:
+    if length > 0:
         for i in range(17, 17 + length):
             ds = ds + getHex(data[i],2)
-        print(padText("Data bytes (" + str(l) + ")") + ds)
+            ps = ps + chr(data[i])
+        print(padText("Data bytes (" + str(length) + ")") + ds + " (Ascii: " + ps + ")")
 
 
 def decodeExplicitZigbeeCmdRequest(data):
@@ -572,6 +581,22 @@ def decodeManyToOneRouteIndicator(data):
     
     printBasicHeader("Many-to-one routing information", data, 3)
     
+
+def decodeJoinNotification(data):
+    # The Xbee has received a join notification status packet (frame ID 0xA5)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Join notification status\"")
+    print("Parent:")
+    print(padText("Address (16-bit)") + getHex(((data[4] << 8) + data[5]),4))
+    print("Joining Device:")
+    print(padText("Address (16-bit)") + getHex(((data[6] << 8) + data[7]),4))
+    read64bitAddress(data, 8)
+    getJoinStatus(data[16])
+
 
 ###########################################################################
 # This section comprises utilities access by the above decoder functions  #
@@ -1154,7 +1179,7 @@ def getATStatus(code):
     # Returns:
     #   Nothing
     
-    m = [ "OK", "ERROR", "Invalid Command", "Invalid Parameter", "TX Failure"]
+    m = [ "OK", "ERROR", "Invalid command", "Invalid parameter", "TX failure"]
     
     for i in range(0, len(m)):
         if code == i:
@@ -1172,13 +1197,51 @@ def getModemStatus(code):
     #   Nothing
     
     m = [0x00, "Hardware reset",
-         0x01, "Watchdog timer reset",
+         0x01, "Watchdog reset",
          0x02, "Joined network",
-         0x03, "Disassociated",
+         0x03, "Left network",
+         0x04, "Configurartion error or sync lost",
+         0x05, "Coordinator realigned",
          0x06, "Coordinator started",
          0x07, "Network security updated",
+         0x0B, "Network awoke",
+         0x0C, "Network went to sleep",
          0x0D, "Voltage supply exceeded",
-         0x11, "Modem config changed"]
+         0x0E, "Device cloud connected",
+         0x0F, "Device cloud disconnected",
+         0x11, "Modem configuration changed",
+         0x12, "Access fault",
+         0x13, "Fatal stack error",
+         0x14, "PLKE table initiated",
+         0x15, "PLKE table success",
+         0x16, "PLKE table full",
+         0x17, "PLKE not authorized",
+         0x18, "PLKE invalid Trust Center request",
+         0x19, "PLKE Trust Center update failure",
+         0x1A, "PLKE bad EUI address",
+         0x1B, "PLKE Link Key rejected",
+         0x1C, "PLKE update occurred",
+         0x1D, "PLKE Link Key table clear",
+         0x1E, "Zigbee frequency agility requested channel change",
+         0x1F, "Zigbee no joinable beacons; execute ATFR",
+         0x20, "Zigbee token space recovered",
+         0x21, "Zigbee token space unrecoverable",
+         0x22, "Zigbee token space corrupt",
+         0x23, "Zigbee dual-mode metaframe error",
+         0x24, "BLE connect",
+         0x25, "BLE disconnect",
+         0x34, "Bandmask configuration failed",
+         0x80, "Stack reset",
+         0x81, "FIB bootloader reset",
+         0x82, "Send or join command issued with connect from AP",
+         0x83, "AP not found",
+         0x84, "PSK not configured",
+         0x87, "SSID not found",
+         0x88, "Failed to join with security enabled",
+         0x89, "Core lockup or crystal reset failure",
+         0x8A, "Invalid channel",
+         0x8B, "Low VCC reset",
+         0x8E, "Failed to join AP"]
     
     for i in range(0, len(m), 2):
         if code == m[i]:
@@ -1224,22 +1287,28 @@ def getDeliveryStatus(code):
     #   Nothing
     
     m = [0x00, "Success",
-         0x01, "MAC ACK Failure",
-         0x02, "CCA Failure",
-         0x15, "Invalid Destination Endpoint",
-         0x21, "Network ACK Failure",
-         0x22, "Not Joined to Network",
+         0x01, "MAC ACK failure",
+         0x02, "CCA failure",
+         0x03, "Packet not transmitted and purged",
+         0x04, "Physical error on the interface"
+         0x15, "Invalid destination endpoint",
+         0x18, "No buffers available",
+         0x21, "Network ACK failure",
+         0x22, "Not joined to network",
          0x23, "Self-addressed",
-         0x24, "Address Not Found",
-         0x25, "Route Not Found",
-         0x26, "Broadcast Source Failed to Hear a Neighbour Relay the Message",
-         0x2B, "Invalid Binding Table Index",
-         0x2C, "Resource Error: Lack of Free Buffers, Timers etc",
-         0x2D, "Attempted Broadcast with APS Transmission",
-         0x2E, "Attempted Unicast with APS Transmission, but EE=0",
-         0x32, "Resource Error: Lack of Free Buffers, Timers etc",
-         0x74, "Data Payload Too Large",
-         0x75, "Indirect Message Unrequested"]
+         0x24, "Address not found",
+         0x25, "Route not found",
+         0x26, "Broadcast relay not heard",
+         0x2B, "Invalid binding table index",
+         0x2C, "Invalid endpoint",
+         0x2D, "Attempted broadcast with APS transmission",
+         0x2E, "Attempted unicast with APS transmission, but EE=0",
+         0x31, "Software error occurred"
+         0x32, "Resource error: lack of free buffers, timers etc.",
+         0x74, "Data payload too large",
+         0x75, "Indirect message unrequested",
+         0x76, "Client socket creation attempt failed",
+         0xBB, "Key not authorized"]
     
     for i in range(0, len(m), 2):
         if code == m[i]:
@@ -1256,10 +1325,12 @@ def getDiscoveryStatus(code):
     # Returns:
     #   Nothing
     
-    m = [ "No Discovery Overhead", "Address Discovery", "Route Discovery", "Address and Route"]
+    m = [ "No Discovery Overhead", "Address Discovery", "Route Discovery", "Address and Route", "Extended timeout discovery"]
     
     if code > -1 and code < 4:
         print(padText("Discovery status") + m[code])
+    elif code == 0x40:
+        print(padText("Discovery status") + m[4])
     else:
         print("[ERROR] Unknown Discovery status code " + getHex(code,2))
 
@@ -1774,7 +1845,25 @@ def getDeviceCapability(code):
     fs = fs[0:1].upper() + fs[1:-2]
     return fs
     
- 
+
+def getJoinStatus(code):
+    # Determine the device capability data embedded in a device announce packet
+    # Parameters:
+    #   1. Integer - the message code included in the packet
+    # Returns:
+    #   Nothing
+
+    m = [0x00, "Standard security secured rejoin", 0x01, "Standard security unsecured join",
+         0x02, "Device left", 0x03, "Standard security unsecured rejoin",
+         0x04, "High security secured rejoin", 0x05, "High security unsecured join",
+         0x07, "High security unsecured rejoin"]
+    for i in range(0, len(m), 2):
+        if code == m[i]:
+            print(padText("Bootloader message") + m[i + 1])
+            return
+    print("[ERROR] Unknown join status value " + getHex(code, 2))
+
+
 ###########################################################################
 # This section comprises generic utility functions used by all parts of   #
 # the program                                                             #
