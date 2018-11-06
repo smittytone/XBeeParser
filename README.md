@@ -109,6 +109,10 @@ Checksum                      : 6E
 - 1.0.2
     - Add Discover Commands Received, Discover Commands Generated request decoders
     - Add Discover Commands Received, Discover Commands Generated response decoders
+    - Add further XBee command constants
+    - Add XBee commands:
+        - 0xA4: Register joining device status
+        - 0xA5: Join notification status
     - Update help, version info
     - Fix little endian byte order on ZCL frame decoders
 - 1.0.1 *November 5, 2018*

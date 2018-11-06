@@ -45,7 +45,7 @@ XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1 #DONE
 XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2 #DONE
 XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3 #DONE
 XBEE_CMD_REGISTER_DEVICE_JOIN_STATUS        = 0xA4
-XBEE_CMD_JOIN_NOTIFICATION_STATUS           = 0xA5
+XBEE_CMD_JOIN_NOTIFICATION_STATUS           = 0xA5 #DONE
 
 # ZCL Global Commands
 ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00 #DONE
@@ -226,6 +226,8 @@ def processPacket(packet):
         decodeDeviceAuthIndicator(values)
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
         decodeManyToOneRouteIndicator(values)
+    elif cmd == XBEE_CMD_REGISTER_DEVICE_JOIN_STATUS:
+        decodeDeviceJoinStatus(values)
     elif cmd == XBEE_CMD_JOIN_NOTIFICATION_STATUS:
         decodeJoinNotification(values)
     else:
@@ -582,7 +584,7 @@ def decodeManyToOneRouteIndicator(data):
     printBasicHeader("Many-to-one routing information", data, 3)
     
 
-def decodeJoinNotification(data):
+def decodeDeviceJoinStatus(data):
     # The Xbee has received a join notification status packet (frame ID 0xA5)
     # Parameters:
     #   1. Array - the packet data as a collection of integers
@@ -590,6 +592,18 @@ def decodeJoinNotification(data):
     #   Nothing
     
     print(padText("XBee command ID") + getHex(data[3],2) + " \"Join notification status\"")
+    print(padText("XBee frame ID") + getHex(data[4],2))
+    getDeviceJoinStatus(data[5])
+
+
+def decodeJoinNotification(data):
+    # The Xbee has received a join notification status packet (frame ID 0xA5)
+    # Parameters:
+    #   1. Array - the packet data as a collection of integers
+    # Returns:
+    #   Nothing
+    
+    print(padText("XBee command ID") + getHex(data[3],2) + " \"Register joining device status\"")
     print("Parent:")
     print(padText("  Address (16-bit)") + getHex(((data[4] << 8) + data[5]),4))
     print("Joining Device:")
@@ -1819,11 +1833,11 @@ def getBootloaderMessage(code):
     # Returns:
     #   Nothing
 
-    m = ["ACK", 0x06, "NACK", 0x15, "No MAC ACK", 0x40,
-         "Query - Bootload not active", 0x51, "Query response", 0x52]
+    m = [0x06, "ACK", 0x15, "NACK", 0x40, "No MAC ACK", 
+         0x51, "Query - Bootload not active", 0x52, "Query response"]
     for i in range(0, len(m), 2):
-        if code == m[i + 1]:
-            print(padText("Bootloader message") + m[i])
+        if code == m[i]:
+            print(padText("Bootloader message") + m[i + 1])
             return
     print("[ERROR] Unknown Firmware Update Bootloader message value " + getHex(code, 2))
 
@@ -1835,7 +1849,8 @@ def getDeviceCapability(code):
     # Returns:
     #   String - the capability list
 
-    m = ["alternate PAN Coordinator", "device type", "power source", "receiver on when idle", "R", "R", "security capable", "allocate address"]
+    m = ["alternate PAN Coordinator", "device type", "power source", "receiver on when idle", 
+         "R", "R", "security capable", "allocate address"]
     fs = ""
     for i in range(0,8):
         if (code & (1 << i)) == (1 << i):
@@ -1848,7 +1863,7 @@ def getDeviceCapability(code):
     
 
 def getJoinStatus(code):
-    # Determine the device capability data embedded in a device announce packet
+    # Determine a join notification status embedded in a join notification packet
     # Parameters:
     #   1. Integer - the message code included in the packet
     # Returns:
@@ -1860,9 +1875,27 @@ def getJoinStatus(code):
          0x07, "High security unsecured rejoin"]
     for i in range(0, len(m), 2):
         if code == m[i]:
-            print(padText("Bootloader message") + m[i + 1])
+            print(padText("Join status") + m[i + 1])
             return
     print("[ERROR] Unknown join status value " + getHex(code, 2))
+
+
+def getDeviceJoinStatus(code):
+    # Determine the device joining status data embedded in a device joining packet
+    # Parameters:
+    #   1. Integer - the message code included in the packet
+    # Returns:
+    #   Nothing
+
+    m = [0x00, "Success", 0x01, "Key too long", 0xB1, "Address not found in key table",
+         0xB2, "Invalid key value", 0xB3, "Invalid address",
+         0xB4, "Key table full", 0xBD, "Invalid install code",
+         0x07, "Key not found"]
+    for i in range(0, len(m), 2):
+        if code == m[i]:
+            print(padText("Device join status") + m[i + 1])
+            return
+    print("[ERROR] Unknown device joining status value " + getHex(code, 2))
 
 
 ###########################################################################
