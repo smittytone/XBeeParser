@@ -106,7 +106,7 @@ Checksum                      : 6E
 
 ## Release Notes ##
 
-- 1.0.2
+- 1.0.2 *November 6, 2018*
     - Add Discover Commands Received, Discover Commands Generated request decoders
     - Add Discover Commands Received, Discover Commands Generated response decoders
     - Add further XBee command constants
