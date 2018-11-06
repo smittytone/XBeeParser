@@ -2,7 +2,7 @@
 
 ##########################################################################
 #                                                                        #
-# XBeeParser 1.0.1                                                       #
+# XBeeParser 1.0.2                                                       #
 # Copyright 2018, Tony Smith (@smittytone)                               #
 # License: MIT (terms attached to this repo)                             #
 #                                                                        #
@@ -80,7 +80,7 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "1.0.1"
+APP_VERSION = "1.0.2"
 
 # ZCL Global Command names
 ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
@@ -1803,7 +1803,7 @@ def getBinary(value):
 
 
 def showHelp():
-    print("ZigbeeParser version " + APP_VERSION + "\n")
+    showVersion()
     print("Usage:")
     print("  python xbp.py <XBee packet hex string>")
     print("\nThe XBee packet string must not contains spaces.\n")
@@ -1811,8 +1811,14 @@ def showHelp():
     print("  -e / --escape <true/false> - Use escaping when decoding packets. Default: true")
     print("  -d / --debug <true/false>  - Show extra debug information. Default: false")
     print("  -v / --version             - Show version information")
-    print("  -h / --help                - Show help information")
+    print("  -h / --help                - Show help information\n")
 
+
+def showVersion():
+    print("\nXBeeParser version " + APP_VERSION)
+    print("Copyright (c) Tony Smith (@smittytone) 2018")
+    print("Licence: MIT <https://github.com/smittytone/XBeeParser/blob/master/LICENSE>\n")
+    
 
 ###########################################################################
 # The main entry point. Here we decode the options (if any) selected by   #
@@ -1829,7 +1835,7 @@ if __name__ == '__main__':
             c = sys.argv[i]
             if c == "-v" or c == "--version":
                 # Print the version
-                print("XBeeParser version " + APP_VERSION)
+                showVersion()
                 i = i + 1
             elif c == "-h" or c == "--help":
                 # Print help
