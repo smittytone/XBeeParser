@@ -2,7 +2,7 @@
 
 ##########################################################################
 #                                                                        #
-# XBeeParser 1.0.3                                                       #
+# XBeeParser 1.0.4                                                       #
 # Copyright 2018, Tony Smith (@smittytone)                               #
 # License: MIT (terms attached to this repo)                             #
 #                                                                        #
@@ -85,7 +85,7 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "1.0.3"
+APP_VERSION = "1.0.4"
 
 # ZCL Global Command names
 ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
@@ -1994,6 +1994,7 @@ def showVersion():
 ###########################################################################
 
 if __name__ == '__main__':    
+    showedVersion = False
     if len(sys.argv) > 1:
         # Run through the args to find options only
         i = 1
@@ -2004,10 +2005,12 @@ if __name__ == '__main__':
             if c == "-v" or c == "--version":
                 # Print the version
                 showVersion()
+                showedVersion = True
                 i = i + 1
             elif c == "-h" or c == "--help":
                 # Print help
                 showHelp()
+                showedVersion = True
                 i = i + 1
             elif c == "-e" or c == "--escape":
                 # Are we escaping?
@@ -2068,6 +2071,11 @@ if __name__ == '__main__':
             if i >= len(sys.argv):
                 done = True
         
+        # If no version info shown, show welcome
+        if showedVersion is False:
+            # Print welcome
+            print("XBeeParser -- the XBee Packet Decoder")
+
         # Run through the args to find the packet data and process it
         # NOTE We do it this was so that we take into account options
         #      placed after the packet

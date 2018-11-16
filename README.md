@@ -1,8 +1,8 @@
-# XBeeParser 1.0.3 #
+# XBeeParser 1.0.4 #
 
 This is an XBee packet decoder written in Python 3.
 
-It is a work in progress. Version 1.0.3 decodes all the standard XBee packets, and provides further decoding of a limited (but growing) selection of Zigbee Device Object (ZDO) commands (eg. 16-bit network address request) and general (aka ‘global’) Zigbee Cluster Library commands (eg. Read Attribute).
+It is a work in progress. The current version decodes all the standard XBee packets, and provides further decoding of a limited (but growing) selection of Zigbee Device Object (ZDO) commands (eg. 16-bit network address request) and general (aka ‘global’) Zigbee Cluster Library commands (eg. Read Attribute).
 
 ## Usage ##
 
@@ -106,9 +106,11 @@ Checksum                      : 6E
 
 ## Release Notes ##
 
-- 1.0.3 *November 8, 2018*
+- 1.0.4 &mdash; *In Development*
+    - Add intro text on run
+- 1.0.3 &mdash; *November 8, 2018*
     - Fix ZDO address lookup response type check
-- 1.0.2 *November 6, 2018*
+- 1.0.2 &mdash; *November 6, 2018*
     - Add Discover Commands Received, Discover Commands Generated request decoders
     - Add Discover Commands Received, Discover Commands Generated response decoders
     - Add further XBee command constants
@@ -117,10 +119,10 @@ Checksum                      : 6E
         - 0xA5: Join notification status
     - Update help, version info
     - Fix little endian byte order on ZCL frame decoders
-- 1.0.1 *November 5, 2018*
+- 1.0.1 &mdash; *November 5, 2018*
     - Fix incorrect attribute type display
     - Fix attribute value display bug
-- 1.0.0 *November 2, 2018*
+- 1.0.0 &mdash; *November 2, 2018*
     - Initial release
 
 ## Licence and Copyright ##
