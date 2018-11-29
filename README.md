@@ -108,6 +108,7 @@ Checksum                      : 6E
 
 - 1.0.4 &mdash; *In Development*
     - Add intro text on run
+    - Some code clean-up
 - 1.0.3 &mdash; *November 8, 2018*
     - Fix ZDO address lookup response type check
 - 1.0.2 &mdash; *November 6, 2018*

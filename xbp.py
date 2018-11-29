@@ -1129,6 +1129,7 @@ def decodeZDO(data, cmd):
         if sd == 0xFF:
             print(padText("  Network manager address") + getHex(data[6] + (data[7] << 8),2))
 
+
 ###########################################################################
 # This section comprises utility functions used by the primary decoders   #
 # listed above.                                                           #
@@ -1171,7 +1172,7 @@ def getSendOptions(code):
     #   Nothing
     
     ms = ""
-    
+
     if code & 0x01 == 0x01:
         ms = ms + "disable retries and route repair, "
     if code & 0x02 == 0x02:
@@ -1279,7 +1280,7 @@ def getPacketStatus(code):
     #   Nothing
     
     ms = ""
-    
+
     if code == 0x00:
         ms = "packet mot acknowledged, "
     if code & 0x01:
@@ -1610,8 +1611,7 @@ def getNodeDescriptor(data, start):
     #   Nothing
     
     # Node Descriptor Byte 1
-    logType = (data[start] & 0xE0) >> 5
-    getDeviceType(logType)
+    getDeviceType((data[start] & 0xE0) >> 5)
     if data[start] & 0x10 == 0x10:
         print(padText("  Complex descriptor available") + "Yes")
     else:
@@ -1788,7 +1788,6 @@ def getOneWireStatus(code):
     #   Nothing
 
     m = ["A/D sensor read", 0x01, "temperature sensor read", 0x02, "water present", 0x60]
-    
     ms = ""
     for i in range(0, len(m), 2):
         if code & m[i + 1] == m[i + 1]:
@@ -1941,8 +1940,7 @@ def padText(s, e = True):
     # Returns:
     #   String
     
-    l = TEXT_SIZE - len(s)
-    t = s + SPACE_STRING[0:l]
+    t = s + SPACE_STRING[0:(TEXT_SIZE - len(s)]
     if e is True:
         t = t + ": "
     return t
