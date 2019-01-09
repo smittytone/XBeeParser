@@ -106,12 +106,12 @@ Checksum                      : 6E
 
 ## Release Notes ##
 
-- 1.0.4 &mdash; *In Development*
+- 1.0.4 &mdash; *9 January 2019*
     - Add intro text on run
     - Some code clean-up
-- 1.0.3 &mdash; *November 8, 2018*
+- 1.0.3 &mdash; *8 November 2019*
     - Fix ZDO address lookup response type check
-- 1.0.2 &mdash; *November 6, 2018*
+- 1.0.2 &mdash; *6 November 2018*
     - Add Discover Commands Received, Discover Commands Generated request decoders
     - Add Discover Commands Received, Discover Commands Generated response decoders
     - Add further XBee command constants
@@ -120,16 +120,16 @@ Checksum                      : 6E
         - 0xA5: Join notification status
     - Update help, version info
     - Fix little endian byte order on ZCL frame decoders
-- 1.0.1 &mdash; *November 5, 2018*
+- 1.0.1 &mdash; *5 November 2018*
     - Fix incorrect attribute type display
     - Fix attribute value display bug
-- 1.0.0 &mdash; *November 2, 2018*
+- 1.0.0 &mdash; *2 November 2018*
     - Initial release
 
 ## Licence and Copyright ##
 
 XBeeParser's source code is issued under the [MIT license](LICENSE).
 
-XBeeParser source code is copyright &copy; 2018, Tony Smith.
+XBeeParser source code is copyright &copy; 2018-19, Tony Smith.
 
 XBee is a brand of Digi International.
