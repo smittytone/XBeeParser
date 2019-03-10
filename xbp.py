@@ -2,7 +2,7 @@
 
 ##########################################################################
 #                                                                        #
-# XBeeParser 1.0.4                                                       #
+# XBeeParser 1.0.5                                                       #
 # Copyright 2018, Tony Smith (@smittytone)                               #
 # License: MIT (terms attached to this repo)                             #
 #                                                                        #
@@ -85,7 +85,7 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "1.0.4"
+APP_VERSION = "1.0.5"
 
 # ZCL Global Command names
 ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
@@ -130,12 +130,10 @@ def processPacket(packet):
         if c == " ":
             packet = packet[0:i] + packet[i + 1:]
         else:
-            i = i + 1
-        if i >= len(packet):
-            done = True
+            i += 1
+        if i >= len(packet): done = True
     
-    if debug is True:
-        print(packet)
+    if debug is True: print(packet)
     
     # Does the data contain an even number of characters? It should
     # TODO Should this just pad the end with 0?
@@ -161,9 +159,8 @@ def processPacket(packet):
         else:
             values.append(int(c, 16))
         
-        i = i + 2
-        if i >= len(packet):
-            done = True
+        i += 2
+        if i >= len(packet): done = True
 
     # Is the first character the XBee packet marker?
     if values[0] == 0x7E:
@@ -175,8 +172,7 @@ def processPacket(packet):
     # Test the checksum value (the last byte in the packet)
     checksum = values[len(values) - 1]
     cs = 0
-    for i in range(3, len(values) - 1):
-        cs = cs + values[i]
+    for i in range(3, len(values) - 1): cs = cs + values[i]
     cs = (0xFF - (cs & 0xFF)) & 0xFF
     if cs != checksum:
         print("[ERROR] Packet checksum test failed (" + getHex(cs,2) + " should be " + getHex(checksum,2) + ")")
@@ -276,8 +272,8 @@ def decodeZigbeeTransitRequest(data):
     length = (data[1] << 8) + data[2] - 14
     if length > 0:
         for i in range(17, 17 + length):
-            ds = ds + getHex(data[i],2)
-            ps = ps + chr(data[i])
+            ds += getHex(data[i],2)
+            ps += chr(data[i])
         print(padText("Data bytes (" + str(length) + ")") + ds + " (Ascii: " + ps + ")")
 
 
@@ -345,7 +341,7 @@ def decodeCreateSourceRouteRequest(data):
         for i in range(17, 17 + length, 2):
             a = (data[i] << 8) + data[i + 1]
             print(padText("  Address " + str(c)) + getHex(a,4))
-            c = c + 1
+            c += 1
     elif l < n * 2:
         print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
         sys.exit(0)
@@ -365,8 +361,7 @@ def decodeATResponse(data):
     dv = printFrameData(data, 8, length)
 
     # Trap ND packets
-    if cs == "ND":
-        decodeNIData(dv, 0)
+    if cs == "ND": decodeNIData(dv, 0)
 
 
 def decodeModemStatus(data):
@@ -477,14 +472,11 @@ def decodeXBeeSensorReadIndicator(data):
     for i in range(16,24,2):
         a = (data[i] << 8) + data[i + 1]
         values.append(a)
-        if a == 0xFF:
-            noSensors = noSensors + 1
-    if noSensors == 4:
-        print("No AD sensors found")
+        if a == 0xFF: noSensors = noSensors + 1
+    if noSensors == 4: print("No AD sensors found")
     else:
         es = ""
-        for i in range(0,4):
-            es = es + getHex(values[i],4) + ", "
+        for i in range(0,4): es = es + getHex(values[i],4) + ", "
         es = es[0:len(es)-2]
         print(padText("AD sensor values") + es)
     
@@ -519,7 +511,6 @@ def decodeRemoteATCommand(data):
     printStandardHeader("Remote AT command response", data, 3)
     print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
     getATStatus(data[17])
-    
     length = (data[1] << 8) + data[2] - 15
     dv = printFrameData(data, 18, length)
 
@@ -534,7 +525,6 @@ def decodeFirmwareUpdate(data):
     printBasicHeader("XBee firmware update", data, 3)
     getPacketStatus(data[14])
     getBootloaderMessage(data[15])
-
     print(padText("Block number") + str(data[16]))
     read64bitAddress(data, 17, "Target address (64-bit)")
     
@@ -559,7 +549,7 @@ def decodeRouteRecordIndicator(data):
         for i in range(16, 16 + l, 2):
             a = (data[i] << 8) + data[i + 1]
             print(padText("  Address " + str(c)) + getHex(a,4))
-            c = c + 1
+            c += 1
     elif l < n * 2:
         print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
         sys.exit(0)
@@ -631,8 +621,7 @@ def decodeATCommon(data, cmd, noParamMessage = ""):
     print(padText("XBee command ID") + getHex(data[3],2) + " \"" + cmd + "\"")
     print(padText("XBee frame ID") + getHex(data[4],2))
     print(padText("XBee AT command") + "\"" + cs + "\"")
-    if len(noParamMessage) > 0:
-        decodeATParamCommon(data, 7, 4, noParamMessage)
+    if len(noParamMessage) > 0: decodeATParamCommon(data, 7, 4, noParamMessage)
     return cs
 
 
@@ -648,8 +637,7 @@ def decodeATParamCommon(data, startIndex, delta, noParamMessage):
     ds = ""
     length = (data[1] << 8) + data[2] - delta
     if length > 0:
-        for i in range(startIndex, startIndex + length):
-            ds = ds + getHex(data[i],2)
+        for i in range(startIndex, startIndex + length): ds = ds + getHex(data[i],2)
     else:
         ds = noParamMessage
     print(padText("Command parameter value") + ds)
@@ -712,10 +700,10 @@ def decodeNIData(data, start):
     done = False
     while done is False:
         if (data[index]) != 0x00:
-            nis = nis + chr(data[index])
+            nis += chr(data[index])
         else:
             done = True
-        index = index + 1
+        index += 1
     
     if len(nis) > 0 and nis[0] != " ":
         print(padText("NI string") + nis)
@@ -780,7 +768,7 @@ def decodeZCLFrame(frameData):
     
     index = 1
     if manSpec is True:
-        mc = frameData[1] +(frameData[2] << 8)
+        mc = frameData[1] + (frameData[2] << 8)
         print(padText("  Manufacturer code") + getHex(mc,4))
         index = 3
     
@@ -804,8 +792,7 @@ def decodeZCLFrame(frameData):
     else:
         # Dump the data, which contains Cluster-specific info
         ds = ""
-        for i in range(index + 2, len(frameData)):
-            ds = ds + getHex(frameData[i],2)
+        for i in range(index + 2, len(frameData)): ds = ds + getHex(frameData[i],2)
         print(padText("  Data") + ds)
 
 
@@ -840,10 +827,9 @@ def decodeZCLReadAttributeReq(data, start):
     es = ""
     for i in range(start, len(data), 2):
         v = data[i] + (data[i + 1] << 8)
-        ms = ms + getHex(v,4) + ", "
+        ms += getHex(v,4) + ", "
     ms = ms[0:-2]
-    if len(ms) > 4:
-        es = "s"
+    if len(ms) > 4: es = "s"
     print(padText("  Attribute ID" + es) + ms)
 
 
@@ -890,7 +876,7 @@ def decodeAttribute(data, start):
         index = index + 4 + decodeAttributeData(data, index + 4, data[index + 3])
     else:
         # Attribute access unsuccessful - just skip it
-        index = index + 4
+        index += 4
         print("  [ERROR] Cannot read attribute data")
     return index
 
@@ -926,11 +912,7 @@ def decodeValue(data, start, dataType):
     size = 1
     if dataType == 0x10:
         # Handle Boolean values separately
-        s = "FORBIDDEN"
-        if data[start] == 0x00:
-            s = "FALSE"
-        else:
-            s = "TRUE"
+        s = "FALSE" if data[start] == 0x00 else "TRUE"
         print(padText("  Attribute value") + s)
     else:  
         # Handle all other numeric values
@@ -938,8 +920,8 @@ def decodeValue(data, start, dataType):
         v = 0
         k = 0
         for j in range(start + size - 1, start - 1 , -1):
-            v = v + (data[j] << k)
-            k = k + 8
+            v += (data[j] << k)
+            k += 8
         print(padText("  Attribute value") + getHex(v,size))
     return size
 
@@ -959,18 +941,16 @@ def decodeCollection(data, start, dataType):
         # Octet or char string
         length = data[index]
         ds = ""
-        for j in range(index + 1, index + 1 + length):
-            ds = ds + chr(data[j])
+        for j in range(index + 1, index + 1 + length): ds = ds + chr(data[j])
         print(padText("  Attribute value") + ds)
-        index = index + 1 + length
+        index += (1 + length)
     elif dataType == 0x43 or dataType == 0x44:
         # Long octet or char string
         length = data[index] + (data[index + 1] << 8)
         ds = ""
-        for j in range(index + 2, index + 2 + length):
-            ds = ds + chr(data[j])
+        for j in range(index + 2, index + 2 + length): ds = ds + chr(data[j])
         print(padText("  Attribute value") + ds)
-        index = index + 2 + length
+        index += (2 + length)
     elif dataType == 0x48 or dataType == 0x50 or dataType == 0x51:
         # Array, Set or Bag - collections of the same type so we need
         # to iterate to read in all the element values
@@ -985,8 +965,8 @@ def decodeCollection(data, start, dataType):
             #      correct bytes
             # NOTE Ignore the nesting limit for now
             adjustedIndex = index + 3 + (j * size)
-            length = length + decodeAttributeData(data, adjustedIndex, subType)
-        index = index + 3 + length
+            length += decodeAttributeData(data, adjustedIndex, subType)
+        index += (3 + length)
     elif type == 0x52:
         # Structure - collection of mixed types, so this is more complex 
         itemCount = data[index] + (data[index + 1] << 8)
@@ -996,8 +976,8 @@ def decodeCollection(data, start, dataType):
             adjustedIndex = index + 2 + itemLength
             subType = data[adjustedIndex]
             itemLength = 1 + decodeAttributeData(data, adjustedIndex + 1, subType)
-            length = length + itemLength
-        index = index + 2 + length
+            length += itemLength
+        index += (2 + length)
     return index - start
 
 
@@ -1012,7 +992,7 @@ def decodeAttributeWriteReq(data, start):
     index = start
     print(padText("  Attribute ID") + getHex(data[index] + (data[index + 1] << 8), 4))
     print(padText("  Attribute type") + getZCLAttributeType(data[index + 2]))
-    index = index + 3 + decodeAttributeData(data, index + 3, data[index + 2])
+    index += (3 + decodeAttributeData(data, index + 3, data[index + 2]))
     return index
 
 
@@ -1085,8 +1065,7 @@ def decodeZDO(data, cmd):
         # 16-bit Network Address Request
         read64bitSserdda(data, 1)
         getZDOType(data[9])
-        if data[9] == 0x01:
-            print(padText("  Start index") + str(data[10]))
+        if data[9] == 0x01: print(padText("  Start index") + str(data[10]))
     elif cmd == 0x8000 or cmd == 0x8001:
         # 16-bit Address Response / 64-bit Address Response
         read64bitSserdda(data, 2)
@@ -1145,8 +1124,7 @@ def read64bitAddress(data, start = 4, message = "Address (64-bit)"):
     #   The 64-bit address as a string of 8 octets
     
     ms = ""
-    for i in range(start, start + 8):
-        ms = ms + getHex(data[i], 2)
+    for i in range(start, start + 8): ms = ms + getHex(data[i], 2)
     print(padText(message) + ms)
 
 
@@ -1154,8 +1132,7 @@ def read64bitSserdda(data, start = 4):
     # As read64bitAddress(), but returning the address in little endian order
     
     ms = ""
-    for i in range(start + 7, start - 1, -1):
-        ms = ms + getHex(data[i], 2)
+    for i in range(start + 7, start - 1, -1): ms = ms + getHex(data[i], 2)
     print(padText("  Address (64-bit)") + ms)
 
 
@@ -1174,13 +1151,13 @@ def getSendOptions(code):
     ms = ""
 
     if code & 0x01 == 0x01:
-        ms = ms + "disable retries and route repair, "
+        ms += "disable retries and route repair, "
     if code & 0x02 == 0x02:
-        ms = ms + "apply changes, "
+        ms += "apply changes, "
     if code & 0x20 == 0x20:
-        ms = ms + "enable APS encryption, "
+        ms += "enable APS encryption, "
     if code & 0x40 == 0x40:
-        ms = ms + "use the extended transmission timeout, "
+        ms += "use the extended transmission timeout, "
     if len(ms) > 0:
         ms = ms[0:1].upper() + ms[1:-2]
     else:
@@ -1284,13 +1261,13 @@ def getPacketStatus(code):
     if code == 0x00:
         ms = "packet mot acknowledged, "
     if code & 0x01:
-        ms = ms + "packet acknowledged, "
+        ms += "packet acknowledged, "
     if code & 0x02:
-        ms = ms + "broadcast packet, "
+        ms += "broadcast packet, "
     if code & 0x20:
-        ms = ms + "APS-encrypted packet, "
+        ms += "APS-encrypted packet, "
     if code & 0x40:
-        ms = ms + "End-Device sent packet, "
+        ms += "End-Device sent packet, "
     
     ms = ms[0:1].upper() + ms[1:-2]
     print(padText("Status") + ms)
@@ -1396,8 +1373,7 @@ def getZCLAttributeStatus(code):
          0xc3, "Not found"]
     
     for i in range(0, len(m), 2):
-        if code == m[i]:
-            return m[i + 1]
+        if code == m[i]: return m[i + 1]
     return "Unknown"
 
 
@@ -1466,8 +1442,7 @@ def getZCLAttributeType(code):
          0xff, "UNK"]
     
     for i in range(0, len(m), 2):
-        if code == m[i]:
-            return m[i + 1]
+        if code == m[i]: return m[i + 1]
     return "OPAQUE"
 
 
@@ -1536,8 +1511,7 @@ def getZCLAttributeSize(code):
             0xff, 0]
     
     for i in range(0, len(m), 2):
-        if code == m[i]:
-            return m[i + 1]
+        if code == m[i]: return m[i + 1]
     return -1
 
 
@@ -1570,10 +1544,7 @@ def getZDOCommand(code):
         # distinguishes responses (set) from requests (unset)
         if code & 0x7FFF == m[i + 1]:
             # Append the appropriate message type
-            if code > 0x7FFF:
-                return (m[i] + " Response")
-            else:
-                return (m[i] + " Request")
+            return (m[i] + (" Response" if code > 0x7FFF else + " Request"))
     return ("[ERROR] Unknown ZDO command " + getHex(code,4))
 
 
@@ -1627,10 +1598,8 @@ def getNodeDescriptor(data, start):
     m = ["868MHz", "R", "900MHz", "2.4GHz", "R"]
     fs = ""
     for i in range(3,8):
-        if s[i] == "1":
-            fs = m[i - 3]
-    if fs == "R":
-        fs = "[ERROR] Reserved band indicated"
+        if s[i] == "1": fs = m[i - 3]
+    if fs == "R": fs = "[ERROR] Reserved band indicated"
     print(padText("  Frequency band") + fs)
 
     # Byte 3
@@ -1654,15 +1623,10 @@ def getNodeDescriptor(data, start):
 
     # Byte 13
     fs = ""
-    if data[start + 12] & 0x80 == 0x80:
-        fs = "extended active endpoint list available, "
-    if data[start + 12] & 0x40 == 0x40:
-        fs = fs + "extended simple descriptor list available, "
+    if data[start + 12] & 0x80 == 0x80: fs = "extended active endpoint list available, "
+    if data[start + 12] & 0x40 == 0x40: fs = fs + "extended simple descriptor list available, "
     fs = fs[0:1].upper() + fs[1:-2]
-    if len(fs) > 0:
-        print(padText("  Descriptor capability field") + fs)
-    else:
-        print(padText("  Descriptor capability field") + "No bits set")
+    print(padText("  Descriptor capability field") + (fs if len(fs) > 0 else "No bits set"))
 
 
 def getSimpleDescriptor(data, start):
@@ -1683,18 +1647,16 @@ def getSimpleDescriptor(data, start):
     if count != 0:
         # Display the list of input clusters
         fs = ""
-        for i in range (7, 7 + (count * 2), 2):
-            fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
+        for i in range (7, 7 + (count * 2), 2): fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
         print(padText("  Input clusters") + fs[0:-2])
-        start = start + (count * 2)
+        start += (count * 2)
     
     count = data[start + 7]
     print(padText("  Output cluster count") + getHex(count,2))
     if count != 0:
         # Display the list of output clusters
         fs = ""
-        for i in range (7, 7 + (count * 2), 2):
-            fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
+        for i in range (7, 7 + (count * 2), 2): fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
         print(padText("  Output clusters") + fs[0:-2])
 
 
@@ -1718,27 +1680,20 @@ def getDigitalChannelMask(data, start):
         v = int(math.pow(2,i))
         if nd & v == v:
             # Digital IO enabled
-            ms = ms + m[i]
+            ms += m[i]
             
             # Is the IO permitted?
             if m[i] == "N/A":
                 bad = True
             else:
                 # Is the sample HIGH or LOW?
-                if sd & v == v:
-                    ms = ms + " (HIGH), "
-                else:
-                    ms = ms + " (LOW), "
+                ms += (" (HIGH), " if sd & v == v else " (LOW), ")
     
-    if len(ms) > 0:
-        # Remove the final comma and space from the message string
-        ms = ms[0:-2]
-    else:
-        ms = "None"
+    # Remove the final comma and space from the message string
+    ms = ms[0:-2] if len(ms) > 0 else "None"
     
     print(padText("Enabled Digital IOs") + ms)
-    if bad is True:
-        print("[ERROR] Unavailable Digital IOs selected")
+    if bad is True: print("[ERROR] Unavailable Digital IOs selected")
 
 
 def getAnalogChannelMask(data, start):
@@ -1760,24 +1715,19 @@ def getAnalogChannelMask(data, start):
         v = int(math.pow(2,i))
         if code & v == v:
             # Analog IO enabled
-            ms = ms + m[i]
-            if m[i] == "N/A":
-                bad = True
+            ms += m[i]
+            if m[i] == "N/A": bad = True
             else:
                 # Read the sample value and add to the display string
                 s = (data[start + count] << 8) + data[start + 1 + count]
-                ms = ms + " (" + getHex(s,4) + "), "
-                count = count + 2
+                ms += " (" + getHex(s,4) + "), "
+                count += 2
     
-    if len(ms) > 0:
-        # Remove the final comma and space from the message string
-        ms = ms[0:-2]
-    else:
-        ms = "None"
+    # Remove the final comma and space from the message string
+    ms = ms[0:-2] if len(ms) > 0 else "None"
     
     print(padText("Enabled Analog IOs") + ms)
-    if bad is True:
-        print("[ERROR] Unavailable Analog IOs selected")
+    if bad is True: print("[ERROR] Unavailable Analog IOs selected")
 
 
 def getOneWireStatus(code):
@@ -1790,8 +1740,7 @@ def getOneWireStatus(code):
     m = ["A/D sensor read", 0x01, "temperature sensor read", 0x02, "water present", 0x60]
     ms = ""
     for i in range(0, len(m), 2):
-        if code & m[i + 1] == m[i + 1]:
-            ms = ms + m[i] + ", "
+        if code & m[i + 1] == m[i + 1]: ms += m[i] + ", "
     
     # Remove the final comma and space from the message string
     ms = ms[0:1].upper() + ms[1:-2]
@@ -1855,9 +1804,9 @@ def getDeviceCapability(code):
     for i in range(0,8):
         if (code & (1 << i)) == (1 << i):
             if m[i] == "R":
-                fs = fs + "reserved function, "
+                fs += "reserved function, "
             else:
-                fs = fs + m[i] + ", "
+                fs += m[i] + ", "
     fs = fs[0:1].upper() + fs[1:-2]
     return fs
     
@@ -1925,10 +1874,7 @@ def prefix(s):
     
     global prefixed
     
-    if prefixed is True:
-        return "0x" + s
-    else:
-        return s
+    return ("0x" + s if prefixed is True else s)
 
 
 def padText(s, e = True):
@@ -1940,9 +1886,8 @@ def padText(s, e = True):
     # Returns:
     #   String
     
-    t = s + SPACE_STRING[0:(TEXT_SIZE - len(s)]
-    if e is True:
-        t = t + ": "
+    t = s + SPACE_STRING[0:(TEXT_SIZE - len(s))]
+    if e is True: t += ": "
     return t
 
 
@@ -2004,12 +1949,12 @@ if __name__ == '__main__':
                 # Print the version
                 showVersion()
                 showedVersion = True
-                i = i + 1
+                i += 1
             elif c == "-h" or c == "--help":
                 # Print help
                 showHelp()
                 showedVersion = True
-                i = i + 1
+                i += 1
             elif c == "-e" or c == "--escape":
                 # Are we escaping?
                 if i < len(sys.argv) - 1:
@@ -2023,7 +1968,7 @@ if __name__ == '__main__':
                     else:
                         print("[ERROR] bad argument for -e/--escape: " + v)
                         sys.exit(0)
-                    i = i + 2
+                    i += 2
                 else:
                     print("[ERROR] missing argument for -e/--escape")
                     sys.exit(0)
@@ -2040,7 +1985,7 @@ if __name__ == '__main__':
                     else:
                         print("[ERROR] bad argument for -e/--escape: " + v)
                         sys.exit(0)
-                    i = i + 2
+                    i += 2
                 else:
                     print("[ERROR] missing argument for -p/--prefix")
                     sys.exit(0)
@@ -2056,7 +2001,7 @@ if __name__ == '__main__':
                     else:
                         print("[ERROR] bad argument for -d/--debug: " + v)
                         sys.exit(0)
-                    i = i + 2
+                    i += 2
                 else:
                     print("[ERROR] missing argument for -d/--debug")
                     sys.exit(0)
@@ -2065,7 +2010,7 @@ if __name__ == '__main__':
                 print("[ERROR] unrecognized option: " + c)
                 sys.exit(0)
             else:
-                i = i + 1
+                i += 1
             if i >= len(sys.argv):
                 done = True
         

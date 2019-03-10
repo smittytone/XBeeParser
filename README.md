@@ -1,4 +1,4 @@
-# XBeeParser 1.0.4 #
+# XBeeParser 1.0.5 #
 
 This is an XBee packet decoder written in Python 3.
 
@@ -106,6 +106,8 @@ Checksum                      : 6E
 
 ## Release Notes ##
 
+- 1.0.5 &mdash; *Unreleased*
+    - Code improvements
 - 1.0.4 &mdash; *9 January 2019*
     - Add intro text on run
     - Some code clean-up
