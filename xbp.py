@@ -1237,11 +1237,10 @@ def getModemStatus(code):
          0x8B, "Low VCC reset",
          0x8E, "Failed to join AP"]
     
-    for i in range(0, len(m), 2):
-        if code == m[i]:
-            print(padText("Modem status") + m[i + 1])
-            return
-    
+    if code in m:
+        print(padText("Modem status") + m[m.index(code) + 1])
+        return
+
     if code >= 0x80:
         print(padText("Modem status") + "Stack Error")
         return
@@ -1304,11 +1303,10 @@ def getDeliveryStatus(code):
          0x76, "Client socket creation attempt failed",
          0xBB, "Key not authorized"]
     
-    for i in range(0, len(m), 2):
-        if code == m[i]:
-            print(padText("Delivery status") + m[i + 1])
-            return
-    
+    if code in m:
+        print(padText("Delivery status") + m[m.index(code) + 1])
+        return
+
     print("[ERROR] Unknown Delivery status code " + getHex(code,2))
 
 
