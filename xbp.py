@@ -337,16 +337,16 @@ def decodeCreateSourceRouteRequest(data):
     print(pad_text("Number of addresses") + get_hex(n,2))
 
     length = (data[1] << 8) + data[2] - 14
-    if l > 0:
+    if length > 0:
         a = 0
         c = 1
         for i in range(17, 17 + length, 2):
             a = (data[i] << 8) + data[i + 1]
             print(pad_text("  Address " + str(c)) + get_hex(a,4))
             c += 1
-    elif l < n * 2:
-        print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
-        sys.exit(0)
+    elif length < n * 2:
+        print("[ERROR]: missing address data - " + str(length / 2) + " included, " + n + " expected")
+        sys.exit(1)
 
 
 def decodeATResponse(data):
@@ -798,23 +798,23 @@ def decodeZCLFrame(frameData):
         print(pad_text("  Data") + ds)
 
 
-def decodeZCLCommand(cmd, data, start):
+def decodeZCLCommand(comd, data, start):
     # Jump table for general ZCL commands
     
-    if cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
+    if comd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
         decodeZCLReadAttributeReq(data, start)
-    elif cmd == ZCL_GLOBAL_CMD_READ_ATTR_RSP or cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_NO:
+    elif comd in (ZCL_GLOBAL_CMD_READ_ATTR_RSP, ZCL_GLOBAL_CMD_WRITE_ATTR_NO):
         decodeAttributeList(data, start, ATT_TYPE_READ_RSP)
-    elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_REQ or cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_UND:
+    elif comd in (ZCL_GLOBAL_CMD_WRITE_ATTR_REQ, ZCL_GLOBAL_CMD_WRITE_ATTR_UND):
         decodeAttributeList(data, start, ATT_TYPE_WRITE_REQ)
-    elif cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
+    elif comd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
         decodeAttributeList(data, start, ATT_TYPE_WRITE_RSP)
-    elif cmd == ZCL_GLOBAL_CMD_DISC_RCMDS_REQ or cmd == ZCL_GLOBAL_CMD_DISC_GCMDS_REQ:
+    elif comd in (ZCL_GLOBAL_CMD_DISC_RCMDS_REQ, ZCL_GLOBAL_CMD_DISC_GCMDS_REQ):
         decodeCommandsReq(data, start)
-    elif cmd == ZCL_GLOBAL_CMD_DISC_RCMDS_RSP or cmd == ZCL_GLOBAL_CMD_DISC_GCMDS_RSP:
+    elif comd in (ZCL_GLOBAL_CMD_DISC_RCMDS_RSP, ZCL_GLOBAL_CMD_DISC_GCMDS_RSP):
         decodeCommandsRsp(data, start)
     else:
-        print("  [ERROR] General command " + get_hex(cmd,2) + " not yet supported by this program")
+        print("  [ERROR] General command " + get_hex(comd) + " not yet supported by this program")
 
 
 def decodeZCLReadAttributeReq(data, start):
@@ -1626,7 +1626,7 @@ def getNodeDescriptor(data, start):
     if data[start + 12] & 0x80 == 0x80: fs = "extended active endpoint list available, "
     if data[start + 12] & 0x40 == 0x40: fs = fs + "extended simple descriptor list available, "
     fs = fs[0:1].upper() + fs[1:-2]
-    print(pad_text("  Descriptor capability field") + (fs if len(fs) > 0 else "No bits set"))
+    print(pad_text("  Descriptor capability field") + (fs if fs else "No bits set"))
 
 
 def get_simple_desc(frame, start):
@@ -1679,8 +1679,8 @@ def get_digital_channel_mask(frame, start):
     bad = False
     
     for i in range(0,16):
-        value = int(math.pow(2,i))
-        if n_dig & value == value:
+        num = int(math.pow(2,i))
+        if n_dig & num == num:
             # Digital IO enabled
             text += opts[i]
             
@@ -1689,10 +1689,10 @@ def get_digital_channel_mask(frame, start):
                 bad = True
             else:
                 # Is the sample HIGH or LOW?
-                text += (" (HIGH), " if s_dig & value == value else " (LOW), ")
+                text += (" (HIGH), " if s_dig & num == num else " (LOW), ")
     
     # Remove the final comma and space from the message string
-    text = text[0:-2] if len(text) > 0 else "None"
+    text = text[0:-2] if text else "None"
     
     print(pad_text("Enabled Digital IOs") + text)
     if bad is True: print("[ERROR] Unavailable Digital IOs selected")
@@ -1715,8 +1715,8 @@ def get_analog_channel_mask(frame, start):
     count = 0
     
     for i in range(0,8):
-        value = int(math.pow(2,i))
-        if code & value == value:
+        num = int(math.pow(2,i))
+        if code & num == num:
             # Analog IO enabled
             text += opts[i]
             if opts[i] == "N/A": 
@@ -1728,7 +1728,7 @@ def get_analog_channel_mask(frame, start):
                 count += 2
     
     # Remove the final comma and space from the message string
-    text = text[0:-2] if len(text) > 0 else "None"
+    text = text[0:-2] if text else "None"
     
     print(pad_text("Enabled Analog IOs") + text)
     if bad is True: print("[ERROR] Unavailable Analog IOs selected")
@@ -1863,12 +1863,12 @@ def get_device_join_status(code):
 # the program                                                             #
 ###########################################################################
 
-def get_hex(value, digits=2):
+def get_hex(num, digits=2):
     """
     Convert an integer to a hex string of 'digit' characters.
     
     Args:
-        value  (int): The value to be converted.
+        num    (int): The value to be converted.
         digits (int): The number of characters the final string should comprise.
     
     Returns:
@@ -1876,7 +1876,7 @@ def get_hex(value, digits=2):
     """
 
     format_str = "{:0" + str(digits) + "X}"
-    return format_str.format(value)
+    return format_str.format(num)
 
 
 def prefix(a_str):
@@ -1911,29 +1911,27 @@ def pad_text(a_str, do_tail=True):
     return text
 
 
-def get_binary(value):
+def get_binary(num):
     """
     Convert an 8-bit value to a binary string of 1s and 0s.
     
     Args:
-        value (int): The value to be converted.
+        num (int): The value to be converted.
     
     Returns:
         str: The binary string.
     """
     
     bin_str = ""
-    for i in range(0,8):
-        bit = int(math.pow(2,i))
-        bin_str = ("1" if (value & bit) == bit else "0") + bin_str
+    for idx in range(0,8):
+        bit = int(math.pow(2,idx))
+        bin_str = ("1" if (num & bit) == bit else "0") + bin_str
     return bin_str
 
 
 def decode_endian(value_array, is_little_endian=True):
-    if is_little_endian is True:
-        return (value_array[0] + (value_array[1] << 8))
-    else:
-        return ((value_array[0] << 8) + value_array[1])
+    if is_little_endian is True: return (value_array[0] + (value_array[1] << 8))
+    return ((value_array[0] << 8) + value_array[1])
 
 
 def show_help():
@@ -1963,25 +1961,25 @@ if __name__ == '__main__':
     showed_version = False
     if len(sys.argv) > 1:
         # Run through the args to find options only
-        i = 1
+        arg_idx = 1
         packet = ""
         done = False
         while done is False:
-            cmd = sys.argv[i]
+            cmd = sys.argv[arg_idx]
             if cmd in ("-v", "--version"):
                 # Print the version
                 show_version()
                 showed_version = True
-                i += 1
+                arg_idx += 1
             elif cmd in ("-h", "--help"):
                 # Print help
                 show_help()
                 showed_version = True
-                i += 1
+                arg_idx += 1
             elif cmd in ("-e", "--escape"):
                 # Are we escaping?
-                if i < len(sys.argv) - 1:
-                    value = sys.argv[i + 1].lower()
+                if arg_idx < len(sys.argv) - 1:
+                    value = sys.argv[arg_idx + 1].lower()
                     if value in ("true", "yes", "1"):
                         escaped = True
                         print("Packet decoding will use escaping")
@@ -1991,14 +1989,14 @@ if __name__ == '__main__':
                     else:
                         print("[ERROR] bad argument for -e/--escape: " + value)
                         sys.exit(1)
-                    i += 2
+                    arg_idx += 2
                 else:
                     print("[ERROR] missing argument for -e/--escape")
                     sys.exit(1)
-            elif c in ("-p", "--prefix"):
+            elif cmd in ("-p", "--prefix"):
                 # Are we prefixing?
-                if i < len(sys.argv) - 1:
-                    value = sys.argv[i + 1].lower()
+                if arg_idx < len(sys.argv) - 1:
+                    value = sys.argv[arg_idx + 1].lower()
                     if value in ("true", "yes", "1"):
                         prefixed = True
                         print("Hex values will be prefixed with 0x")
@@ -2008,14 +2006,14 @@ if __name__ == '__main__':
                     else:
                         print("[ERROR] bad argument for -p/--prefix: " + value)
                         sys.exit(1)
-                    i += 2
+                    arg_idx += 2
                 else:
                     print("[ERROR] missing argument for -p/--prefix")
                     sys.exit(1)
             elif cmd in ("-d", "--debug"):
                 # Are we debugging?
-                if i < len(sys.argv) - 1:
-                    value = sys.argv[i + 1].lower()
+                if arg_idx < len(sys.argv) - 1:
+                    value = sys.argv[arg_idx + 1].lower()
                     if v in ("true", "yes", "1"):
                         debug = True
                         print("Extra debugging information will be printed during decoding")
@@ -2024,7 +2022,7 @@ if __name__ == '__main__':
                     else:
                         print("[ERROR] bad argument for -d/--debug: " + value)
                         sys.exit(1)
-                    i += 2
+                    arg_idx += 2
                 else:
                     print("[ERROR] missing argument for -d/--debug")
                     sys.exit(1)
@@ -2033,8 +2031,8 @@ if __name__ == '__main__':
                 print("[ERROR] unrecognized option: " + cmd)
                 sys.exit(1)
             else:
-                i += 1
-            if i >= len(sys.argv): done = True
+                arg_idx += 1
+            if arg_idx >= len(sys.argv): done = True
         
         # If no version info shown, show welcome
         if showed_version is False:
@@ -2045,9 +2043,9 @@ if __name__ == '__main__':
         # NOTE We do it this was so that we take into account options
         #      placed after the packet
         skip = False
-        for i in range(1, len(sys.argv)):
+        for oct_idx in range(1, len(sys.argv)):
             if skip is False:
-                octet = sys.argv[i]
+                octet = sys.argv[oct_idx]
                 if octet[0] != "-":
                     packet += octet
                 else:
