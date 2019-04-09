@@ -2,7 +2,7 @@
 
 ##########################################################################
 #                                                                        #
-# XBeeParser 1.0.5                                                       #
+# XBeeParser 1.0.6                                                       #
 # Copyright 2018, Tony Smith (@smittytone)                               #
 # License: MIT (terms attached to this repo)                             #
 #                                                                        #
@@ -85,16 +85,16 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "1.0.5"
+APP_VERSION = "1.0.6"
 
 # ZCL Global Command names
-ZCLCommmands = ["Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
+ZCLCommmands = ("Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
                 "Write Attributes Response", "Write Attributes No Response", "Configure Reporting", "Configure Reporting Response",
                 "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
                 "Discover Attributes", "Discover Attributes Response", "Read Attributes Structured", "Write Attributes Structured",
                 "Write Attributes Structured Response", "Discover Commands Received", "Discover Commands Received Response",
                 "Discover Commands Generated", "Discover Commands Generated Response", "Discover Attributes Extended",
-                "Discover Attributes Extended Response"]
+                "Discover Attributes Extended Response")
 
 
 ##########################################################################
@@ -110,7 +110,7 @@ prefixed = False
 # Packet-processing entry point                                          #
 ##########################################################################
 
-def processPacket(packet):
+def process_packet(packet):
     # Process a string of hex bytes received or sent via an XBee
     # Parameters:
     #   1. String - the packet data as a hexadecimal string as passed in via
@@ -147,17 +147,17 @@ def processPacket(packet):
     #      characters, an XBee feature
     values = []
     done = False
-    escapeNextChar = False
+    escape_next_char = False
     i = 0
     while done is False:
-        c = packet[i:i+2]
-        if c == "7D" and escaped is True and escapeNextChar is False:
-            escapeNextChar = True
-        elif escapeNextChar is True:
-            values.append(int(c, 16) ^ 0x20)
-            escapeNextChar = False
+        octet = packet[i:i+2]
+        if octet == "7D" and escaped is True and escape_next_char is False:
+            escape_next_char = True
+        elif escape_next_char is True:
+            values.append(int(octet, 16) ^ 0x20)
+            escape_next_char = False
         else:
-            values.append(int(c, 16))
+            values.append(int(octet, 16))
         
         i += 2
         if i >= len(packet): done = True
@@ -166,21 +166,21 @@ def processPacket(packet):
     if values[0] == 0x7E:
         print("XBee frame found")
     else:
-        print("[ERROR] Packet data does not start with an XBee signature (" + getHex(values[0],2) + ", should be 7E)")
+        print("[ERROR] Packet data does not start with an XBee signature (" + get_hex(values[0],2) + ", should be 7E)")
         return
     
     # Test the checksum value (the last byte in the packet)
-    checksum = values[len(values) - 1]
-    cs = 0
-    for i in range(3, len(values) - 1): cs = cs + values[i]
-    cs = (0xFF - (cs & 0xFF)) & 0xFF
-    if cs != checksum:
-        print("[ERROR] Packet checksum test failed (" + getHex(cs,2) + " should be " + getHex(checksum,2) + ")")
+    read_check_sum = values[len(values) - 1]
+    calc_check_sum = 0
+    for i in range(3, len(values) - 1): calc_check_sum += values[i]
+    calc_check_sum = (0xFF - (cs & 0xFF)) & 0xFF
+    if calc_check_sum != read_check_sum:
+        print("[ERROR] Packet checksum test failed (" + get_hex(calc_check_sum,2) + " should be " + get_hex(read_check_sum,2) + ")")
         return
 
     # Display the frame data length
     length = values[1] * 256 + values[2]
-    print(padText("Frame length") + str(length) + " bytes")
+    print(pad_text("Frame length") + str(length) + " bytes")
 
     # Look for XBee frame types and decode the data individually
     cmd = values[3]
@@ -227,9 +227,9 @@ def processPacket(packet):
     elif cmd == XBEE_CMD_JOIN_NOTIFICATION_STATUS:
         decodeJoinNotification(values)
     else:
-        print("[ERROR] Unknown or not-yet-supported frame type: " + getHex(values[3],2))
+        print("[ERROR] Unknown or not-yet-supported frame type: " + get_hex(values[3],2))
         return
-    print(padText("Checksum") + getHex(checksum,2))
+    print(pad_text("Checksum") + get_hex(checksum,2))
 
 
 ##########################################################################
@@ -264,7 +264,7 @@ def decodeZigbeeTransitRequest(data):
     #   Nothing
 
     printStandardHeader("Issue basic Zigbee request", data, 3)
-    print(padText("Radius") + getHex(data[15],2))
+    print(pad_text("Radius") + get_hex(data[15],2))
     getSendOptions(data[16])
     
     ds = ""
@@ -272,9 +272,9 @@ def decodeZigbeeTransitRequest(data):
     length = (data[1] << 8) + data[2] - 14
     if length > 0:
         for i in range(17, 17 + length):
-            ds += getHex(data[i],2)
+            ds += get_hex(data[i],2)
             ps += chr(data[i])
-        print(padText("Data bytes (" + str(length) + ")") + ds + " (Ascii: " + ps + ")")
+        print(pad_text("Data bytes (" + str(length) + ")") + ds + " (Ascii: " + ps + ")")
 
 
 def decodeExplicitZigbeeCmdRequest(data):
@@ -285,16 +285,16 @@ def decodeExplicitZigbeeCmdRequest(data):
     #   Nothing
 
     printStandardHeader("Issue explicit Zigbee request", data, 3)
-    print(padText("Source endpoint") + getHex(data[15],2))
-    print(padText("Destination endpoint") + getHex(data[16],2))
+    print(pad_text("Source endpoint") + get_hex(data[15],2))
+    print(pad_text("Destination endpoint") + get_hex(data[16],2))
     
     cid = (data[17] << 8) + data[18]
-    print(padText("Cluster ID") + getHex(cid,4))
+    print(pad_text("Cluster ID") + get_hex(cid,4))
     
     pid = (data[19] << 8) + data[20]
-    print(padText("Profile ID") + getHex(pid,4))
+    print(pad_text("Profile ID") + get_hex(pid,4))
     
-    print(padText("Radius") + getHex(data[21],2))
+    print(pad_text("Radius") + get_hex(data[21],2))
     getSendOptions(data[22])
     
     length = (data[1] << 8) + data[2] - 20
@@ -317,7 +317,7 @@ def decodeRemoteCmdRequest(data):
     
     printStandardHeader("Remote AT command request", data, 3)
     getSendOptions(data[15])
-    print(padText("XBee AT command") + "\"" + chr(data[16]) + chr(data[17]) + "\"")
+    print(pad_text("XBee AT command") + "\"" + chr(data[16]) + chr(data[17]) + "\"")
     decodeATParamCommon(data, 18, 15, "Read request")
 
 
@@ -329,10 +329,10 @@ def decodeCreateSourceRouteRequest(data):
     #   Nothing
     
     printStandardHeader("Create source route request", data, 3)
-    print(padText("Route Command Options") + getHex(data[15],2))
+    print(pad_text("Route Command Options") + get_hex(data[15],2))
     
     n = data[16]
-    print(padText("Number of addresses") + getHex(n,2))
+    print(pad_text("Number of addresses") + get_hex(n,2))
 
     length = (data[1] << 8) + data[2] - 14
     if l > 0:
@@ -340,7 +340,7 @@ def decodeCreateSourceRouteRequest(data):
         c = 1
         for i in range(17, 17 + length, 2):
             a = (data[i] << 8) + data[i + 1]
-            print(padText("  Address " + str(c)) + getHex(a,4))
+            print(pad_text("  Address " + str(c)) + get_hex(a,4))
             c += 1
     elif l < n * 2:
         print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
@@ -371,7 +371,7 @@ def decodeModemStatus(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Modem status\"" )
+    print(pad_text("XBee command ID") + get_hex(data[3],2) + " \"Modem status\"" )
     getModemStatus(data[4])
 
 
@@ -382,10 +382,10 @@ def decodeZigbeeTransmitStatus(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Zigbee transmit status\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    print(padText("Address (16-bit)") + getHex(((data[5] << 8) + data[6]),4))
-    print(padText("Retries") + ("None" if data[7] == 0 else str(data[7])))
+    print(pad_text("XBee command ID") + get_hex(data[3],2) + " \"Zigbee transmit status\"")
+    print(pad_text("XBee frame ID") + get_hex(data[4],2))
+    print(pad_text("Address (16-bit)") + get_hex(((data[5] << 8) + data[6]),4))
+    print(pad_text("Retries") + ("None" if data[7] == 0 else str(data[7])))
     getDeliveryStatus(data[8])
     getDiscoveryStatus(data[9])
 
@@ -412,14 +412,14 @@ def decodeZigbeeRXIndicator(data):
     #   Nothing
     
     printBasicHeader("Zigbee explicit RX indicator", data, 3)
-    print(padText("Source endpoint") + getHex(data[14],2))
-    print(padText("Destination endpoint") + getHex(data[15],2))
+    print(pad_text("Source endpoint") + get_hex(data[14],2))
+    print(pad_text("Destination endpoint") + get_hex(data[15],2))
     
     cid = (data[16] << 8) + data[17]
-    print(padText("Cluster ID") + getHex(cid,4))
+    print(pad_text("Cluster ID") + get_hex(cid,4))
     
     pid = (data[18] << 8) + data[19]
-    print(padText("Profile ID") + getHex(pid,4))
+    print(pad_text("Profile ID") + get_hex(pid,4))
     
     getPacketStatus(data[20])
     
@@ -445,14 +445,14 @@ def decodeZigbeeDataSampleRXIndicator(data):
     printBasicHeader("Zigbee IO data sample", data, 3)
     getPacketStatus(data[14])
 
-    print(padText("Number of samples") + str(data[15]))
+    print(pad_text("Number of samples") + str(data[15]))
     nd = (data[16] << 8) + data[17]
     start = 19
     if nd > 0:
-        getDigitalChannelMask(data, 16)
+        get_digital_channel_mask(data, 16)
         start = 21
     if data[18] > 0:
-        getAnalogChannelMask(data, start)
+        get_analog_channel_mask(data, start)
 
 
 def decodeXBeeSensorReadIndicator(data):
@@ -464,7 +464,7 @@ def decodeXBeeSensorReadIndicator(data):
     
     printBasicHeader("XBee sensor read indicator response", data, 3)
     getPacketStatus(data[14])
-    getOneWireStatus(data[15])
+    get_onewire_status(data[15])
     
     # Read the sensor data
     values = []
@@ -476,16 +476,16 @@ def decodeXBeeSensorReadIndicator(data):
     if noSensors == 4: print("No AD sensors found")
     else:
         es = ""
-        for i in range(0,4): es = es + getHex(values[i],4) + ", "
+        for i in range(0,4): es = es + get_hex(values[i],4) + ", "
         es = es[0:len(es)-2]
-        print(padText("AD sensor values") + es)
+        print(pad_text("AD sensor values") + es)
     
     # Read the thermometer data
     a = (data[24] << 8) + data[25]
     if a == 0xFFFF:
         print("No thermometer found")
     else:
-        print(padText("Thermometer reading") + getHex(a,4))
+        print(pad_text("Thermometer reading") + get_hex(a,4))
 
 
 def decodeNodeIDIndicator(data):
@@ -509,7 +509,7 @@ def decodeRemoteATCommand(data):
     #   Nothing
     
     printStandardHeader("Remote AT command response", data, 3)
-    print(padText("XBee AT command") + chr(data[15]) + chr(data[16]))
+    print(pad_text("XBee AT command") + chr(data[15]) + chr(data[16]))
     getATStatus(data[17])
     length = (data[1] << 8) + data[2] - 15
     dv = printFrameData(data, 18, length)
@@ -524,8 +524,8 @@ def decodeFirmwareUpdate(data):
 
     printBasicHeader("XBee firmware update", data, 3)
     getPacketStatus(data[14])
-    getBootloaderMessage(data[15])
-    print(padText("Block number") + str(data[16]))
+    get_bootloader_msg(data[15])
+    print(pad_text("Block number") + str(data[16]))
     read64bitAddress(data, 17, "Target address (64-bit)")
     
     
@@ -540,7 +540,7 @@ def decodeRouteRecordIndicator(data):
     getPacketStatus(data[14])
     
     n = data[15]
-    print(padText("Number of addresses") + getHex(n,2))
+    print(pad_text("Number of addresses") + get_hex(n,2))
 
     l = (data[1] << 8) + data[2] - 13
     if l > 0:
@@ -548,7 +548,7 @@ def decodeRouteRecordIndicator(data):
         c = 1
         for i in range(16, 16 + l, 2):
             a = (data[i] << 8) + data[i + 1]
-            print(padText("  Address " + str(c)) + getHex(a,4))
+            print(pad_text("  Address " + str(c)) + get_hex(a,4))
             c += 1
     elif l < n * 2:
         print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
@@ -581,9 +581,9 @@ def decodeDeviceJoinStatus(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Join notification status\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    getDeviceJoinStatus(data[5])
+    print(pad_text("XBee command ID") + get_hex(data[3],2) + " \"Join notification status\"")
+    print(pad_text("XBee frame ID") + get_hex(data[4],2))
+    get_device_join_status(data[5])
 
 
 def decodeJoinNotification(data):
@@ -593,13 +593,13 @@ def decodeJoinNotification(data):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"Register joining device status\"")
+    print(pad_text("XBee command ID") + get_hex(data[3],2) + " \"Register joining device status\"")
     print("Parent:")
-    print(padText("  Address (16-bit)") + getHex(((data[4] << 8) + data[5]),4))
+    print(pad_text("  Address (16-bit)") + get_hex(((data[4] << 8) + data[5]),4))
     print("Joining Device:")
-    print(padText("  Address (16-bit)") + getHex(((data[6] << 8) + data[7]),4))
+    print(pad_text("  Address (16-bit)") + get_hex(((data[6] << 8) + data[7]),4))
     read64bitAddress(data, 8, "  Address (64-bit)")
-    getJoinStatus(data[16])
+    get_join_status(data[16])
 
 
 ###########################################################################
@@ -618,9 +618,9 @@ def decodeATCommon(data, cmd, noParamMessage = ""):
     #   String - the AT command
     
     cs = chr(data[5]) + chr(data[6])
-    print(padText("XBee command ID") + getHex(data[3],2) + " \"" + cmd + "\"")
-    print(padText("XBee frame ID") + getHex(data[4],2))
-    print(padText("XBee AT command") + "\"" + cs + "\"")
+    print(pad_text("XBee command ID") + get_hex(data[3],2) + " \"" + cmd + "\"")
+    print(pad_text("XBee frame ID") + get_hex(data[4],2))
+    print(pad_text("XBee AT command") + "\"" + cs + "\"")
     if len(noParamMessage) > 0: decodeATParamCommon(data, 7, 4, noParamMessage)
     return cs
 
@@ -637,10 +637,10 @@ def decodeATParamCommon(data, startIndex, delta, noParamMessage):
     ds = ""
     length = (data[1] << 8) + data[2] - delta
     if length > 0:
-        for i in range(startIndex, startIndex + length): ds = ds + getHex(data[i],2)
+        for i in range(startIndex, startIndex + length): ds = ds + get_hex(data[i],2)
     else:
         ds = noParamMessage
-    print(padText("Command parameter value") + ds)
+    print(pad_text("Command parameter value") + ds)
 
 
 def printBasicHeader(cmd, data, start):
@@ -652,9 +652,9 @@ def printBasicHeader(cmd, data, start):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[start],2) + " \"" + cmd + "\"")
+    print(pad_text("XBee command ID") + get_hex(data[start],2) + " \"" + cmd + "\"")
     read64bitAddress(data, start + 1)
-    print(padText("Address (16-bit)") + getHex(((data[start + 9] << 8) + data[start + 10]),4))
+    print(pad_text("Address (16-bit)") + get_hex(((data[start + 9] << 8) + data[start + 10]),4))
     
     
 def printStandardHeader(cmd, data, start):
@@ -666,10 +666,10 @@ def printStandardHeader(cmd, data, start):
     # Returns:
     #   Nothing
     
-    print(padText("XBee command ID") + getHex(data[start],2) + " \"" + cmd + "\"")
-    print(padText("XBee frame ID") + getHex(data[start + 1],2))
+    print(pad_text("XBee command ID") + get_hex(data[start],2) + " \"" + cmd + "\"")
+    print(pad_text("XBee frame ID") + get_hex(data[start + 1],2))
     read64bitAddress(data, start + 2)
-    print(padText("Address (16-bit)") + getHex(((data[start + 10] << 8) + data[start + 11]),4))
+    print(pad_text("Address (16-bit)") + get_hex(((data[start + 10] << 8) + data[start + 11]),4))
     
 
 def printFrameData(data, start, length):
@@ -678,9 +678,9 @@ def printFrameData(data, start, length):
     dv = []
     if length > 0:
         for i in range(start, start + length):
-            ds = ds + getHex(data[i],2)
+            ds = ds + get_hex(data[i],2)
             dv.append(data[i])
-        print(padText("Frame data") + ds)
+        print(pad_text("Frame data") + ds)
     return dv
     
     
@@ -692,7 +692,7 @@ def decodeNIData(data, start):
     # Returns:
     #   Nothing
     
-    print(padText("Source address (16-bit)") + getHex(((data[start] << 8) + data[start + 1]),4))
+    print(pad_text("Source address (16-bit)") + get_hex(((data[start] << 8) + data[start + 1]),4))
     read64bitAddress(data, start + 2, "Source address (64-bit)")
 
     index = start + 10
@@ -706,17 +706,17 @@ def decodeNIData(data, start):
         index += 1
     
     if len(nis) > 0 and nis[0] != " ":
-        print(padText("NI string") + nis)
+        print(pad_text("NI string") + nis)
     else:
-        print(padText("NI string") + "Default")
+        print(pad_text("NI string") + "Default")
 
-    print(padText("Parent address (16-bit)") + getHex(((data[index] << 8) + data[index + 1]),4))
+    print(pad_text("Parent address (16-bit)") + get_hex(((data[index] << 8) + data[index + 1]),4))
     
-    getDeviceType(data[index + 2])
-    getSourceEvent(data[index + 3])
+    get_device_type(data[index + 2])
+    get_source_event(data[index + 3])
 
-    print(padText("Digi Profile ID") + getHex(((data[index + 4] << 8) + data[index + 5]),4))
-    print(padText("Manufacturer ID") + getHex(((data[index + 6] << 8) + data[index + 7]),4))
+    print(pad_text("Digi Profile ID") + get_hex(((data[index + 4] << 8) + data[index + 5]),4))
+    print(pad_text("Manufacturer ID") + get_hex(((data[index + 6] << 8) + data[index + 7]),4))
 
 
 ###########################################################################
@@ -741,8 +741,8 @@ def decodeZCLFrame(frameData):
 
     # Decode and display the frame control byte
     fc = frameData[0]
-    fcs = getBinary(fc)
-    print(padText("  Frame Control Byte") + getHex(fc,2) + " [b" + fcs + "]")
+    fcs = get_binary(fc)
+    print(pad_text("  Frame Control Byte") + get_hex(fc,2) + " [b" + fcs + "]")
     
     if fc & 0x01 == 0x01:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Command is specific to cluster")
@@ -769,21 +769,21 @@ def decodeZCLFrame(frameData):
     index = 1
     if manSpec is True:
         mc = frameData[1] + (frameData[2] << 8)
-        print(padText("  Manufacturer code") + getHex(mc,4))
+        print(pad_text("  Manufacturer code") + get_hex(mc,4))
         index = 3
     
     # Decode and display the ZCL frame header's remaining two bytes
     tsn = frameData[index]
     cid = frameData[index + 1]
-    print(padText("  Transaction seq. number") + getHex(tsn,2))
+    print(pad_text("  Transaction seq. number") + get_hex(tsn,2))
     
     if globalCmd is True:
         if cid < len(ZCLCommmands):
-            print(padText("  Global command") + getHex(cid,2) + " - " + ZCLCommmands[cid])
+            print(pad_text("  Global command") + get_hex(cid,2) + " - " + ZCLCommmands[cid])
         else:
-            print(padText("  Global command") + getHex(cid,2) + " - Unknown")
+            print(pad_text("  Global command") + get_hex(cid,2) + " - Unknown")
     else:
-        print(padText("  Cluster command") + getHex(cid,2))
+        print(pad_text("  Cluster command") + get_hex(cid,2))
 
     # Payload is at 'index' + 2
     if globalCmd is True and manSpec is False:
@@ -792,8 +792,8 @@ def decodeZCLFrame(frameData):
     else:
         # Dump the data, which contains Cluster-specific info
         ds = ""
-        for i in range(index + 2, len(frameData)): ds = ds + getHex(frameData[i],2)
-        print(padText("  Data") + ds)
+        for i in range(index + 2, len(frameData)): ds = ds + get_hex(frameData[i],2)
+        print(pad_text("  Data") + ds)
 
 
 def decodeZCLCommand(cmd, data, start):
@@ -812,7 +812,7 @@ def decodeZCLCommand(cmd, data, start):
     elif cmd == ZCL_GLOBAL_CMD_DISC_RCMDS_RSP or cmd == ZCL_GLOBAL_CMD_DISC_GCMDS_RSP:
         decodeCommandsRsp(data, start)
     else:
-        print("  [ERROR] General command " + getHex(cmd,2) + " not yet supported by this program")
+        print("  [ERROR] General command " + get_hex(cmd,2) + " not yet supported by this program")
 
 
 def decodeZCLReadAttributeReq(data, start):
@@ -827,10 +827,10 @@ def decodeZCLReadAttributeReq(data, start):
     es = ""
     for i in range(start, len(data), 2):
         v = data[i] + (data[i + 1] << 8)
-        ms += getHex(v,4) + ", "
+        ms += get_hex(v,4) + ", "
     ms = ms[0:-2]
     if len(ms) > 4: es = "s"
-    print(padText("  Attribute ID" + es) + ms)
+    print(pad_text("  Attribute ID" + es) + ms)
 
 
 def decodeAttributeList(data, start, attType):
@@ -867,9 +867,9 @@ def decodeAttribute(data, start):
     
     index = start
     
-    print(padText("  Attribute ID") + getHex(data[index] + (data[index + 1] << 8), 4))
-    print(padText("  Attribute read status") + getZCLAttributeStatus(data[index + 2]))
-    print(padText("  Attribute type") + getZCLAttributeType(data[index + 3]))
+    print(pad_text("  Attribute ID") + get_hex(data[index] + (data[index + 1] << 8), 4))
+    print(pad_text("  Attribute read status") + getZCLAttributeStatus(data[index + 2]))
+    print(pad_text("  Attribute type") + getZCLAttributeType(data[index + 3]))
     
     if data[index + 2] == 0:
         # Now get the attribute data
@@ -913,7 +913,7 @@ def decodeValue(data, start, dataType):
     if dataType == 0x10:
         # Handle Boolean values separately
         s = "FALSE" if data[start] == 0x00 else "TRUE"
-        print(padText("  Attribute value") + s)
+        print(pad_text("  Attribute value") + s)
     else:  
         # Handle all other numeric values
         size = getZCLAttributeSize(dataType)
@@ -922,7 +922,7 @@ def decodeValue(data, start, dataType):
         for j in range(start + size - 1, start - 1 , -1):
             v += (data[j] << k)
             k += 8
-        print(padText("  Attribute value") + getHex(v,size))
+        print(pad_text("  Attribute value") + get_hex(v,size))
     return size
 
 
@@ -942,14 +942,14 @@ def decodeCollection(data, start, dataType):
         length = data[index]
         ds = ""
         for j in range(index + 1, index + 1 + length): ds = ds + chr(data[j])
-        print(padText("  Attribute value") + ds)
+        print(pad_text("  Attribute value") + ds)
         index += (1 + length)
     elif dataType == 0x43 or dataType == 0x44:
         # Long octet or char string
         length = data[index] + (data[index + 1] << 8)
         ds = ""
         for j in range(index + 2, index + 2 + length): ds = ds + chr(data[j])
-        print(padText("  Attribute value") + ds)
+        print(pad_text("  Attribute value") + ds)
         index += (2 + length)
     elif dataType == 0x48 or dataType == 0x50 or dataType == 0x51:
         # Array, Set or Bag - collections of the same type so we need
@@ -990,8 +990,8 @@ def decodeAttributeWriteReq(data, start):
     #   The index of the next attribute in the data
     
     index = start
-    print(padText("  Attribute ID") + getHex(data[index] + (data[index + 1] << 8), 4))
-    print(padText("  Attribute type") + getZCLAttributeType(data[index + 2]))
+    print(pad_text("  Attribute ID") + get_hex(data[index] + (data[index + 1] << 8), 4))
+    print(pad_text("  Attribute type") + getZCLAttributeType(data[index + 2]))
     index += (3 + decodeAttributeData(data, index + 3, data[index + 2]))
     return index
 
@@ -1005,8 +1005,8 @@ def decodeAttributeWriteRsp(data, start):
     # Returns:
     #   The number of bytes of data read (ie. how far to move the pointer)
 
-    print(padText("  Attribute ID") + getHex(data[start] + (data[start + 1] << 8), 4))
-    print(padText("  Attribute write status") + getZCLAttributeStatus(data[start]))
+    print(pad_text("  Attribute ID") + get_hex(data[start] + (data[start + 1] << 8), 4))
+    print(pad_text("  Attribute write status") + getZCLAttributeStatus(data[start]))
     return start + 3
 
 
@@ -1019,8 +1019,8 @@ def decodeCommandsReq(data, start):
     # Returns:
     #   Nothing
 
-    print(padText("  First command ID") + getHex(data[start] + (data[start + 1] << 8), 4))
-    print(padText("  Max. command IDs returned") + str(data[start + 2]))
+    print(pad_text("  First command ID") + get_hex(data[start] + (data[start + 1] << 8), 4))
+    print(pad_text("  Max. command IDs returned") + str(data[start + 2]))
 
 
 def decodeCommandsRsp(data, start):
@@ -1032,9 +1032,9 @@ def decodeCommandsRsp(data, start):
     # Returns:
     #   Nothing
 
-    print(padText("  Command discovery complete?") + ("No" if data[start] == 0 else "Yes"))
+    print(pad_text("  Command discovery complete?") + ("No" if data[start] == 0 else "Yes"))
     for i in range(start + 1, len(data)):
-        print(padText("  Command ID " + str(i - start)) + getHex(data[i], 2))
+        print(pad_text("  Command ID " + str(i - start)) + get_hex(data[i], 2))
 
 
 def decodeZDO(data, cmd):
@@ -1047,11 +1047,11 @@ def decodeZDO(data, cmd):
      
     cs = getZDOCommand(cmd)
     if cs[0:8] != "[ERROR]":
-        print(padText("  ZDO command") + cs)
+        print(pad_text("  ZDO command") + cs)
     else:
-        print("[ERROR] ZDO command " + getHex(cmd,4) + " decoding not yet supported")
+        print("[ERROR] ZDO command " + get_hex(cmd,4) + " decoding not yet supported")
         return
-    print(padText("  Transaction seq. number") + getHex(data[0],2))
+    print(pad_text("  Transaction seq. number") + get_hex(data[0],2))
     
     if cmd > 0x7FFF:
         # All responses have frame byte 1 set to status
@@ -1059,54 +1059,54 @@ def decodeZDO(data, cmd):
     else:
         # All responses after 0x0000 have bytes 1 and 2 as a 16-bit address
         if cmd > 0x0000 and cmd < 0x8000 and cmd != 0x0031 and cmd != 0x0038:
-            print(padText("  Address (16-bit)") + getHex(data[1] + (data[2] << 8),4))
+            print(pad_text("  Address (16-bit)") + get_hex(data[1] + (data[2] << 8),4))
 
     if cmd == 0x0000:
         # 16-bit Network Address Request
         read64bitSserdda(data, 1)
         getZDOType(data[9])
-        if data[9] == 0x01: print(padText("  Start index") + str(data[10]))
+        if data[9] == 0x01: print(pad_text("  Start index") + str(data[10]))
     elif cmd == 0x8000 or cmd == 0x8001:
         # 16-bit Address Response / 64-bit Address Response
         read64bitSserdda(data, 2)
-        print(padText("  Address (16-bit)") + getHex(data[10] + (data[11] << 8),4))
+        print(pad_text("  Address (16-bit)") + get_hex(data[10] + (data[11] << 8),4))
         
         if len(data) > 12:
-            print(padText("  No. of addresses") + getHex(data[12],2))
-            print(padText("  Start index") + str(data[13]))
+            print(pad_text("  No. of addresses") + get_hex(data[12],2))
+            print(pad_text("  Start index") + str(data[13]))
             count = 1
             for i in range(14, 14 + data[12] * 2, 2):
-                print(padText("  Address " + str(count)) + getHex(data[i] + (data[i + 1] << 8),4))
+                print(pad_text("  Address " + str(count)) + get_hex(data[i] + (data[i + 1] << 8),4))
     elif cmd == 0x0001:
         # 64-bit Address Request
         getZDOType(data[3])
-        print(padText("  Start index") + str(data[4]))
+        print(pad_text("  Start index") + str(data[4]))
     elif cmd == 0x8002:
         # Node Descriptor Response
         getNodeDescriptor(data, 3)
     elif cmd == 0x0004:
         # Simple descriptor Request
-        print(padText("  Endpoint") + str(data[3]))
+        print(pad_text("  Endpoint") + str(data[3]))
     elif cmd == 0x8004:
         # Simple Descriptor Response
         getSimpleDescriptor(data, 3)
     elif cmd == 0x0013:
         # ZDO Device Announce
         read64bitSserdda(data, 3)
-        print(padText("  Capabilities") + getDeviceCapability(data[11]))
+        print(pad_text("  Capabilities") + get_device_capability(data[11]))
     elif cmd == 0x0031:
         # Management LQI (Neighbor Table) Request
-        print(padText("  Start index") + str(data[1]))
+        print(pad_text("  Start index") + str(data[1]))
     elif cmd == 0x0038:
         # Management Network Update Request
         sd = data[5]
-        print(padText("  Scan Duration") + getHex(sd,2))
+        print(pad_text("  Scan Duration") + get_hex(sd,2))
         if sd < 6:
-            print(padText("  Scan Count") + getHex(data[6],2))
+            print(pad_text("  Scan Count") + get_hex(data[6],2))
         if sd == 0xFE:
-            print(padText("  Network update ID") + getHex(data[6],2))
+            print(pad_text("  Network update ID") + get_hex(data[6],2))
         if sd == 0xFF:
-            print(padText("  Network manager address") + getHex(data[6] + (data[7] << 8),2))
+            print(pad_text("  Network manager address") + get_hex(data[6] + (data[7] << 8),2))
 
 
 ###########################################################################
@@ -1124,16 +1124,16 @@ def read64bitAddress(data, start = 4, message = "Address (64-bit)"):
     #   The 64-bit address as a string of 8 octets
     
     ms = ""
-    for i in range(start, start + 8): ms = ms + getHex(data[i], 2)
-    print(padText(message) + ms)
+    for i in range(start, start + 8): ms = ms + get_hex(data[i], 2)
+    print(pad_text(message) + ms)
 
 
 def read64bitSserdda(data, start = 4):
     # As read64bitAddress(), but returning the address in little endian order
     
     ms = ""
-    for i in range(start + 7, start - 1, -1): ms = ms + getHex(data[i], 2)
-    print(padText("  Address (64-bit)") + ms)
+    for i in range(start + 7, start - 1, -1): ms = ms + get_hex(data[i], 2)
+    print(pad_text("  Address (64-bit)") + ms)
 
 
 ###########################################################################
@@ -1163,7 +1163,7 @@ def getSendOptions(code):
     else:
         ms = "None"
 
-    print(padText("Options") + ms)
+    print(pad_text("Options") + ms)
 
 
 def getATStatus(code):
@@ -1177,10 +1177,10 @@ def getATStatus(code):
     
     for i in range(0, len(m)):
         if code == i:
-            print(padText("Command status") + m[code])
+            print(pad_text("Command status") + m[code])
             return
     
-    print("[Error] Unknown AT status code " + getHex(code,2))
+    print("[Error] Unknown AT status code " + get_hex(code,2))
 
 
 def getModemStatus(code):
@@ -1238,14 +1238,14 @@ def getModemStatus(code):
          0x8E, "Failed to join AP"]
     
     if code in m:
-        print(padText("Modem status") + m[m.index(code) + 1])
+        print(pad_text("Modem status") + m[m.index(code) + 1])
         return
 
     if code >= 0x80:
-        print(padText("Modem status") + "Stack Error")
+        print(pad_text("Modem status") + "Stack Error")
         return
     
-    print("[Error] Unknown modem status code " + getHex(code,2))
+    print("[Error] Unknown modem status code " + get_hex(code,2))
 
 
 def getPacketStatus(code):
@@ -1269,7 +1269,7 @@ def getPacketStatus(code):
         ms += "End-Device sent packet, "
     
     ms = ms[0:1].upper() + ms[1:-2]
-    print(padText("Status") + ms)
+    print(pad_text("Status") + ms)
 
 
 def getDeliveryStatus(code):
@@ -1304,10 +1304,10 @@ def getDeliveryStatus(code):
          0xBB, "Key not authorized"]
     
     if code in m:
-        print(padText("Delivery status") + m[m.index(code) + 1])
+        print(pad_text("Delivery status") + m[m.index(code) + 1])
         return
 
-    print("[ERROR] Unknown Delivery status code " + getHex(code,2))
+    print("[ERROR] Unknown Delivery status code " + get_hex(code,2))
 
 
 def getDiscoveryStatus(code):
@@ -1320,11 +1320,11 @@ def getDiscoveryStatus(code):
     m = [ "No Discovery Overhead", "Address Discovery", "Route Discovery", "Address and Route", "Extended timeout discovery"]
     
     if code > -1 and code < 4:
-        print(padText("Discovery status") + m[code])
+        print(pad_text("Discovery status") + m[code])
     elif code == 0x40:
-        print(padText("Discovery status") + m[4])
+        print(pad_text("Discovery status") + m[4])
     else:
-        print("[ERROR] Unknown Discovery status code " + getHex(code,2))
+        print("[ERROR] Unknown Discovery status code " + get_hex(code,2))
 
 
 def getZCLAttributeStatus(code):
@@ -1543,7 +1543,7 @@ def getZDOCommand(code):
         if code & 0x7FFF == m[i + 1]:
             # Append the appropriate message type
             return (m[i] + (" Response" if code > 0x7FFF else + " Request"))
-    return ("[ERROR] Unknown ZDO command " + getHex(code,4))
+    return ("[ERROR] Unknown ZDO command " + get_hex(code,4))
 
 
 def getZDOType(code):
@@ -1554,11 +1554,11 @@ def getZDOType(code):
     #   Nothing
     
     if code == 0x00:
-        print(padText("  Request type") + "Single device response")
+        print(pad_text("  Request type") + "Single device response")
     elif code == 0x01:
-        print(padText("  Request type") + "Extended response")
+        print(pad_text("  Request type") + "Extended response")
     else:
-        print("[ERROR] Unknown ZDO request type " + getHex(code,2))
+        print("[ERROR] Unknown ZDO request type " + get_hex(code,2))
 
 
 def getZDOStatus(code):
@@ -1568,7 +1568,7 @@ def getZDOStatus(code):
     # Returns:
     #   Nothing
     
-    print(padText("  Response status") + getZCLAttributeStatus(code))
+    print(pad_text("  Response status") + getZCLAttributeStatus(code))
 
 
 def getNodeDescriptor(data, start):
@@ -1580,51 +1580,51 @@ def getNodeDescriptor(data, start):
     #   Nothing
     
     # Node Descriptor Byte 1
-    getDeviceType((data[start] & 0xE0) >> 5)
+    get_device_type((data[start] & 0xE0) >> 5)
     if data[start] & 0x10 == 0x10:
-        print(padText("  Complex descriptor available") + "Yes")
+        print(pad_text("  Complex descriptor available") + "Yes")
     else:
-        print(padText("  Complex descriptor available") + "No")
+        print(pad_text("  Complex descriptor available") + "No")
     if data[start] & 0x08 == 0x08:
-        print(padText("  User descriptor available") + "Yes")
+        print(pad_text("  User descriptor available") + "Yes")
     else:
-        print(padText("  User descriptor available") + "No")
+        print(pad_text("  User descriptor available") + "No")
 
     # Byte 2
-    s = getBinary(data[start + 1])
-    print(padText("  APS flags") + "b" + s[0:3])
+    s = get_binary(data[start + 1])
+    print(pad_text("  APS flags") + "b" + s[0:3])
     m = ["868MHz", "R", "900MHz", "2.4GHz", "R"]
     fs = ""
     for i in range(3,8):
         if s[i] == "1": fs = m[i - 3]
     if fs == "R": fs = "[ERROR] Reserved band indicated"
-    print(padText("  Frequency band") + fs)
+    print(pad_text("  Frequency band") + fs)
 
     # Byte 3
-    fs = getDeviceCapability(data[start + 2])
-    print(padText("  MAC capabilities") + fs)
+    fs = get_device_capability(data[start + 2])
+    print(pad_text("  MAC capabilities") + fs)
 
     # Bytes 4 and 5
-    print(padText("  Manufacturer ID") + getHex(data[start + 3] + (data[start + 4] << 8),4))
+    print(pad_text("  Manufacturer ID") + get_hex(data[start + 3] + (data[start + 4] << 8),4))
 
     # Byte 6
-    print(padText("  Max. buffer size") + getHex(data[start + 5],2))
+    print(pad_text("  Max. buffer size") + get_hex(data[start + 5],2))
 
     # Bytes 7 and 8
-    print(padText("  Max. incoming transfer size") + getHex(data[start + 6] + (data[start + 7] << 8)),4)
+    print(pad_text("  Max. incoming transfer size") + get_hex(data[start + 6] + (data[start + 7] << 8)),4)
 
     # Bytes 9 and 10
-    print(padText("  Server mask") + getHex(data[start + 8] + (data[start + 9] << 8)),4)
+    print(pad_text("  Server mask") + get_hex(data[start + 8] + (data[start + 9] << 8)),4)
 
     # Bytes 11 and 12
-    print(padText("  Max. outgoing transfer size") + getHex(data[start + 10] + (data[start + 11] << 8)),4)
+    print(pad_text("  Max. outgoing transfer size") + get_hex(data[start + 10] + (data[start + 11] << 8)),4)
 
     # Byte 13
     fs = ""
     if data[start + 12] & 0x80 == 0x80: fs = "extended active endpoint list available, "
     if data[start + 12] & 0x40 == 0x40: fs = fs + "extended simple descriptor list available, "
     fs = fs[0:1].upper() + fs[1:-2]
-    print(padText("  Descriptor capability field") + (fs if len(fs) > 0 else "No bits set"))
+    print(pad_text("  Descriptor capability field") + (fs if len(fs) > 0 else "No bits set"))
 
 
 def getSimpleDescriptor(data, start):
@@ -1635,214 +1635,224 @@ def getSimpleDescriptor(data, start):
     # Returns:
     #   Nothing
 
-    print(padText("  Endpoint") + getHex(data[start],2))
-    print(padText("  App profile ID") + getHex(data[start + 1] + (data[start + 2] << 8),4))
-    print(padText("  App device ID") + getHex(data[start + 3] + (data[start + 4] << 8),4))
-    print(padText("  App device version") + getHex((data[start + 5] >> 4),2))
+    print(pad_text("  Endpoint") + get_hex(data[start],2))
+    print(pad_text("  App profile ID") + get_hex(data[start + 1] + (data[start + 2] << 8),4))
+    print(pad_text("  App device ID") + get_hex(data[start + 3] + (data[start + 4] << 8),4))
+    print(pad_text("  App device version") + get_hex((data[start + 5] >> 4),2))
     
     count = data[start + 6]
-    print(padText("  Input cluster count") + getHex(count,2))
+    print(pad_text("  Input cluster count") + get_hex(count,2))
     if count != 0:
         # Display the list of input clusters
         fs = ""
-        for i in range (7, 7 + (count * 2), 2): fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
-        print(padText("  Input clusters") + fs[0:-2])
+        for i in range (7, 7 + (count * 2), 2): fs = fs + get_hex(data[i] + (data[i + 1] << 8), 4) + ", "
+        print(pad_text("  Input clusters") + fs[0:-2])
         start += (count * 2)
     
     count = data[start + 7]
-    print(padText("  Output cluster count") + getHex(count,2))
+    print(pad_text("  Output cluster count") + get_hex(count,2))
     if count != 0:
         # Display the list of output clusters
         fs = ""
-        for i in range (7, 7 + (count * 2), 2): fs = fs + getHex(data[i] + (data[i + 1] << 8), 4) + ", "
-        print(padText("  Output clusters") + fs[0:-2])
+        for i in range (7, 7 + (count * 2), 2): fs = fs + get_hex(data[i] + (data[i + 1] << 8), 4) + ", "
+        print(pad_text("  Output clusters") + fs[0:-2])
 
 
-def getDigitalChannelMask(data, start):
-    # Determine and report which, if any, XBee digital IOs have been enabled
-    # for sampling and include the sample digital data
-    # Parameters:
-    #   1. Array - the current frame data
-    #   2. Integer - the index in the data of the digital channel info
-    # Returns:
-    #   Nothing
+def get_digital_channel_mask(frame, start):
+    """
+    Determine and report which, if any, XBee digital IOs have been enabled
+    for sampling and include the sample digital data.
 
-    nd = (data[start] << 8) + data[start + 1]
-    sd = (data[start + 3] << 8) + data[start + 4]
-    m = ["DIO0", "DIO1", "DIO3", "DIO4", "DIO5", "DIO6", "DIO7",
-         "N/A", "N/A", "DIO10", "DIO11", "DIC12", "N/A", "N/A", "N/A"]
-    ms = ""
+    Args:
+        frame (list): The current frame data.
+        start (int):  The index in the data of the digital channel info.
+    """
+
+    n_dig = (frame[start] << 8) + frame[start + 1]
+    s_dig = (frame[start + 3] << 8) + frame[start + 4]
+    opts = ("DIO0", "DIO1", "DIO3", "DIO4", "DIO5", "DIO6", "DIO7",
+            "N/A", "N/A", "DIO10", "DIO11", "DIC12", "N/A", "N/A", "N/A")
+    text = ""
     bad = False
     
     for i in range(0,16):
-        v = int(math.pow(2,i))
-        if nd & v == v:
+        value = int(math.pow(2,i))
+        if n_dig & value == value:
             # Digital IO enabled
-            ms += m[i]
+            text += opts[i]
             
             # Is the IO permitted?
-            if m[i] == "N/A":
+            if opts[i] == "N/A":
                 bad = True
             else:
                 # Is the sample HIGH or LOW?
-                ms += (" (HIGH), " if sd & v == v else " (LOW), ")
+                text += (" (HIGH), " if s_dig & value == value else " (LOW), ")
     
     # Remove the final comma and space from the message string
-    ms = ms[0:-2] if len(ms) > 0 else "None"
+    text = text[0:-2] if len(text) > 0 else "None"
     
-    print(padText("Enabled Digital IOs") + ms)
+    print(pad_text("Enabled Digital IOs") + text)
     if bad is True: print("[ERROR] Unavailable Digital IOs selected")
 
 
-def getAnalogChannelMask(data, start):
-    # Determine and report which, if any, XBee analog IOs have been enabled
-    # for sampling and so have supplied data in the current frame
-    # Parameters:
-    #   1. Array - the current frame data
-    #   2. Integer - the index in the data of the analog sample data
-    # Returns:
-    #   Nothing
+def get_analog_channel_mask(frame, start):
+    """
+    Determine and report which, if any, XBee analog IOs have been enabled
+    for sampling and so have supplied data in the current frame.
+    
+    Args:
+        frame (list): The current frame data.
+        start (int):  The index in the data of the analog sample data.
+    """
 
-    code = data[18]
-    m = ["AD0", "AD1", "AD2", "AD3", "N/A", "N/A", "N/A", "VIN"]
-    ms = ""
+    code = frame[18]
+    opts = ("AD0", "AD1", "AD2", "AD3", "N/A", "N/A", "N/A", "VIN")
+    text = ""
     bad = False
     count = 0
     
     for i in range(0,8):
-        v = int(math.pow(2,i))
-        if code & v == v:
+        value = int(math.pow(2,i))
+        if code & value == value:
             # Analog IO enabled
-            ms += m[i]
-            if m[i] == "N/A": bad = True
+            text += opts[i]
+            if opts[i] == "N/A": 
+                bad = True
             else:
                 # Read the sample value and add to the display string
-                s = (data[start + count] << 8) + data[start + 1 + count]
-                ms += " (" + getHex(s,4) + "), "
+                sample = (frame[start + count] << 8) + frame[start + count + 1]
+                text += " (" + get_hex(sample, 4) + "), "
                 count += 2
     
     # Remove the final comma and space from the message string
-    ms = ms[0:-2] if len(ms) > 0 else "None"
+    text = text[0:-2] if len(text) > 0 else "None"
     
-    print(padText("Enabled Analog IOs") + ms)
+    print(pad_text("Enabled Analog IOs") + text)
     if bad is True: print("[ERROR] Unavailable Analog IOs selected")
 
 
-def getOneWireStatus(code):
-    # Determine and display an XBee's OneWire sensor status, if enabled
-    # Parameters:
-    #   1. Integer - the status code included in the packet
-    # Returns:
-    #   Nothing
+def get_onewire_status(code):
+    """
+    Determine and display an XBee's OneWire sensor status, if enabled.
+    
+    Args:
+        code (int): The status code included in the packet.
+    """
 
-    m = ["A/D sensor read", 0x01, "temperature sensor read", 0x02, "water present", 0x60]
-    ms = ""
-    for i in range(0, len(m), 2):
-        if code & m[i + 1] == m[i + 1]: ms += m[i] + ", "
+    opts = ("A/D sensor read", 0x01, "temperature sensor read", 0x02, "water present", 0x60)
+    text = ""
+    for i in range(0, len(opts), 2):
+        if code & opts[i + 1] == opts[i + 1]: text += opts[i] + ", "
     
     # Remove the final comma and space from the message string
-    ms = ms[0:1].upper() + ms[1:-2]
-    print(padText("OneWire sensor status") + ms)
+    text = text[0:1].upper() + text[1:-2]
+    print(pad_text("OneWire sensor status") + text)
 
 
-def getDeviceType(code):
-    # Determine the device type embedded in a Node Ident packet
-    # Parameters:
-    #   1. Integer - the type code included in the packet
-    # Returns:
-    #   Nothing
-
-    m = ["Coordinator", "Router", "End Device"]
+def get_device_type(code):
+    """
+    Determine the device type embedded in a Node Ident packet.
+    
+    Args:
+        code (int): The type code included in the packet.
+    """
+    
+    opts = ("Coordinator", "Router", "End Device")
     if code < 0 or code > 2:
         print("[ERROR] Unknown Node Identification device type " + str(code))
     else:
-        print(padText("Device type") + m[code])
+        print(pad_text("Device type") + opts[code])
 
 
-def getSourceEvent(code):
-    # Determine the device type embedded in a Node Ident packet
-    # Parameters:
-    #   1. Integer - the event source code included in the packet
-    # Returns:
-    #   Nothing
+def get_source_event(code):
+    """
+    Determine the device type embedded in a Node Ident packet.
+    
+    Args:
+        code (int): The event source code included in the packet.
+    """
 
-    m = ["AT command \"ND\" issued", "Button pushed", "Network join", "Device power-cycle"]
+    opts = ("AT command \"ND\" issued", "Button pushed", "Network join", "Device power-cycle")
     if code < 0 or code > 3:
         print("[ERROR] Unknown Node Identification event type " + str(code))
     else:
-        print(padText("Source event") + m[code])
+        print(pad_text("Source event") + opts[code])
 
 
-def getBootloaderMessage(code):
-    # Determine the bootloader message embedded in a firmware update packet
-    # Parameters:
-    #   1. Integer - the message code included in the packet
-    # Returns:
-    #   Nothing
+def get_bootloader_msg(code):
+    """
+    Determine the bootloader message embedded in a firmware update packet.
+    
+    Args:
+        code (int): The message code included in the packet.
+    """
 
-    m = [0x06, "ACK", 0x15, "NACK", 0x40, "No MAC ACK", 
-         0x51, "Query - Bootload not active", 0x52, "Query response"]
-    for i in range(0, len(m), 2):
-        if code == m[i]:
-            print(padText("Bootloader message") + m[i + 1])
-            return
-    print("[ERROR] Unknown Firmware Update Bootloader message value " + getHex(code, 2))
+    opts = (0x06, "ACK", 0x15, "NACK", 0x40, "No MAC ACK", 
+            0x51, "Query - Bootload not active", 0x52, "Query response")
+    if code in opts:
+        print(pad_text("Bootloader message") + opts[opts.index(code) + 1])
+        return
+    print("[ERROR] Unknown Firmware Update Bootloader message value " + get_hex(code))
 
 
-def getDeviceCapability(code):
-    # Determine the device capability data embedded in a device announce packet
-    # Parameters:
-    #   1. Integer - the message code included in the packet
-    # Returns:
-    #   String - the capability list
+def get_device_capability(code):
+    """
+    Determine the device capability data embedded in a device announce packet.
+    
+    Args:
+        code (int): The message code included in the packet.
+    
+    Returns:
+        str: The capability list.
+    """
 
-    m = ["alternate PAN Coordinator", "device type", "power source", "receiver on when idle", 
-         "R", "R", "security capable", "allocate address"]
-    fs = ""
+    opts = ("alternate PAN Coordinator", "device type", "power source", "receiver on when idle", 
+            "R", "R", "security capable", "allocate address")
+    cap_list = ""
     for i in range(0,8):
         if (code & (1 << i)) == (1 << i):
-            if m[i] == "R":
-                fs += "reserved function, "
+            if opts[i] == "R":
+                cap_list += "reserved function, "
             else:
-                fs += m[i] + ", "
-    fs = fs[0:1].upper() + fs[1:-2]
-    return fs
+                cap_list += opts[i] + ", "
+    cap_list = cap_list[0:1].upper() + cap_list[1:-2]
+    return cap_list
     
 
-def getJoinStatus(code):
-    # Determine a join notification status embedded in a join notification packet
-    # Parameters:
-    #   1. Integer - the message code included in the packet
-    # Returns:
-    #   Nothing
+def get_join_status(code):
+    """
+    Determine a join notification status embedded in a join notification packet.
+    
+    Args:
+        code (int): The message code included in the packet.
+    """
 
-    m = [0x00, "Standard security secured rejoin", 0x01, "Standard security unsecured join",
-         0x02, "Device left", 0x03, "Standard security unsecured rejoin",
-         0x04, "High security secured rejoin", 0x05, "High security unsecured join",
-         0x07, "High security unsecured rejoin"]
-    for i in range(0, len(m), 2):
-        if code == m[i]:
-            print(padText("Join status") + m[i + 1])
-            return
-    print("[ERROR] Unknown join status value " + getHex(code, 2))
+    opts = (0x00, "Standard security secured rejoin", 0x01, "Standard security unsecured join",
+            0x02, "Device left", 0x03, "Standard security unsecured rejoin",
+            0x04, "High security secured rejoin", 0x05, "High security unsecured join",
+            0x07, "High security unsecured rejoin")
+    if code in opts:
+        print(pad_text("Join status") + opts[opts.index(code) + 1])
+        return
+    print("[ERROR] Unknown join status value " + get_hex(code))
 
 
-def getDeviceJoinStatus(code):
-    # Determine the device joining status data embedded in a device joining packet
-    # Parameters:
-    #   1. Integer - the message code included in the packet
-    # Returns:
-    #   Nothing
+def get_device_join_status(code):
+    """
+    Determine the device joining status data embedded in a device joining packet.
+    
+    Args:
+        code (int): The message code included in the packet.
+    """
 
-    m = [0x00, "Success", 0x01, "Key too long", 0xB1, "Address not found in key table",
-         0xB2, "Invalid key value", 0xB3, "Invalid address",
-         0xB4, "Key table full", 0xBD, "Invalid install code",
-         0x07, "Key not found"]
-    for i in range(0, len(m), 2):
-        if code == m[i]:
-            print(padText("Device join status") + m[i + 1])
-            return
-    print("[ERROR] Unknown device joining status value " + getHex(code, 2))
+    opts = (0x00, "Success", 0x01, "Key too long", 0xB1, "Address not found in key table",
+            0xB2, "Invalid key value", 0xB3, "Invalid address",
+            0xB4, "Key table full", 0xBD, "Invalid install code",
+            0x07, "Key not found")
+    if code in opts:
+        print(pad_text("Device join status") + opts[opts.index(code) + 1])
+        return
+    print("[ERROR] Unknown device joining status value " + get_hex(code))
 
 
 ###########################################################################
@@ -1850,69 +1860,81 @@ def getDeviceJoinStatus(code):
 # the program                                                             #
 ###########################################################################
 
-def getHex(v, d):
-    # Convert the integer 'v' to a hex string of 'd' characters
-    # prefix-padding as required
-    # Parameters:
-    #   1. Integer - the value to be converted
-    #   2. Integer - the number of characters the final string should comprise
-    # Returns:
-    #   String - the hex characters
-
-    s = "{:0" + str(d) + "X}"
-    return s.format(v)
-
-
-def prefix(s):
-    # prefix-padding as required
-    # Parameters:
-    #   1. String - the source hex string
-    # Returns:
-    #   String - the hex string with or without a prefix
+def get_hex(value, digits=2):
+    """
+    Convert an integer to a hex string of 'digit' characters.
     
-    global prefixed
+    Args:
+        value  (int): The value to be converted.
+        digits (int): The number of characters the final string should comprise.
     
-    return ("0x" + s if prefixed is True else s)
+    Returns:
+        str: The hex string.
+    """
+
+    format_str = "{:0" + str(digits) + "X}"
+    return format_str.format(value)
 
 
-def padText(s, e = True):
-    # Pad the end of the passed string 's' with spaces up to a maximum
-    # indicated by 'TEXT_SIZE' and, if 'e' is True, append ": "
-    # Parameters:
-    #   1. String - the string to be padded
-    #   2. Boolean - should the returned string be tailed with ": "
-    # Returns:
-    #   String
+def prefix(a_str):
+    """
+    Pad a hex string with 0x if required.
     
-    t = s + SPACE_STRING[0:(TEXT_SIZE - len(s))]
-    if e is True: t += ": "
-    return t
-
-
-def getBinary(value):
-    # Convert an 8-bit value to a binary string of 1s and 0s
-    # Parameters:
-    #   1. Integer - the value to be converted
-    # Returns:
-    #   String
+    Args:
+        a_str (str): The source hex string.
     
-    bs = ""
+    Returns:
+        str: The hex string with or without a prefix.
+    """
+    
+    return ("0x" + a_str if prefixed is True else a_str)
+
+
+def pad_text(a_str, do_tail=True):
+    """
+    Pad the end of the passed string 's' with spaces up to a maximum 
+    indicated by 'TEXT_SIZE' and, if 'e' is True, append ": ".
+    
+    Args:
+        a_str   (str):  The string to be padded.
+        do_tail (bool): Should the returned string be tailed with ": ".
+    
+    Returns:
+        str: The padded text.
+    """
+    
+    text = a_str + SPACE_STRING[0:(TEXT_SIZE - len(a_str))]
+    if do_tail is True: text += ": "
+    return text
+
+
+def get_binary(value):
+    """
+    Convert an 8-bit value to a binary string of 1s and 0s.
+    
+    Args:
+        value (int): The value to be converted.
+    
+    Returns:
+        str: The binary string.
+    """
+    
+    bin_str = ""
     for i in range(0,8):
         bit = int(math.pow(2,i))
-        bs = ("1" if (value & bit) == bit else "0") + bs
-    return bs
+        bin_str = ("1" if (value & bit) == bit else "0") + bin_str
+    return bin_str
 
 
-def decodeEndian(valueArray, isLittleEndian = True):
-    if isLittleEndian is True:
-        return (valueArray[0] + (valueArray[1] << 8))
+def decode_endian(value_array, is_little_endian=True):
+    if is_little_endian is True:
+        return (value_array[0] + (value_array[1] << 8))
     else:
-        return ((valueArray[0] << 8) + valueArray[1])
+        return ((value_array[0] << 8) + value_array[1])
 
 
-
-def showHelp():
-    showVersion()
+def show_help():
+    show_version()
     print("Usage:")
     print("  python xbp.py <XBee packet hex string>")
     print("\nThe XBee packet string must not contains spaces.\n")
@@ -1923,7 +1945,7 @@ def showHelp():
     print("  -h / --help                - Show help information\n")
 
 
-def showVersion():
+def show_version():
     print("\nXBeeParser version " + APP_VERSION)
     print("Copyright (c) Tony Smith (@smittytone) 2018")
     print("Licence: MIT <https://github.com/smittytone/XBeeParser/blob/master/LICENSE>\n")
@@ -1935,85 +1957,84 @@ def showVersion():
 ###########################################################################
 
 if __name__ == '__main__':    
-    showedVersion = False
+    showed_version = False
     if len(sys.argv) > 1:
         # Run through the args to find options only
         i = 1
-        fs = ""
+        packet = ""
         done = False
         while done is False:
-            c = sys.argv[i]
-            if c == "-v" or c == "--version":
+            cmd = sys.argv[i]
+            if cmd in ("-v", "--version"):
                 # Print the version
-                showVersion()
-                showedVersion = True
+                show_version()
+                showed_version = True
                 i += 1
-            elif c == "-h" or c == "--help":
+            elif cmd in ("-h", "--help"):
                 # Print help
-                showHelp()
-                showedVersion = True
+                show_help()
+                showed_version = True
                 i += 1
-            elif c == "-e" or c == "--escape":
+            elif cmd in ("-e", "--escape"):
                 # Are we escaping?
                 if i < len(sys.argv) - 1:
-                    v = sys.argv[i + 1]
-                    if v == "true" or v == "yes" or v == "1":
+                    value = sys.argv[i + 1].lower()
+                    if value in ("true", "yes", "1"):
                         escaped = True
                         print("Packet decoding will use escaping")
-                    elif v == "false" or v == "no" or v == "0":
+                    elif value in ("false", "no", "0"):
                         escaped = False
                         print("Packet decoding will not use escaping")
                     else:
-                        print("[ERROR] bad argument for -e/--escape: " + v)
-                        sys.exit(0)
+                        print("[ERROR] bad argument for -e/--escape: " + value)
+                        sys.exit(1)
                     i += 2
                 else:
                     print("[ERROR] missing argument for -e/--escape")
-                    sys.exit(0)
-            elif c == "-p" or c == "--prefix":
+                    sys.exit(1)
+            elif c in ("-p", "--prefix"):
                 # Are we prefixing?
                 if i < len(sys.argv) - 1:
-                    v = sys.argv[i + 1]
-                    if v == "true" or v == "yes" or v == "1":
+                    value = sys.argv[i + 1].lower()
+                    if value in ("true", "yes", "1"):
                         prefixed = True
                         print("Hex values will be prefixed with 0x")
-                    elif v == "false" or v == "no" or v == "0":
+                    elif value in ("false", "no", "0"):
                         prefixed = False
                         print("Hex values will not be prefixed with 0x")
                     else:
-                        print("[ERROR] bad argument for -e/--escape: " + v)
-                        sys.exit(0)
+                        print("[ERROR] bad argument for -p/--prefix: " + value)
+                        sys.exit(1)
                     i += 2
                 else:
                     print("[ERROR] missing argument for -p/--prefix")
-                    sys.exit(0)
-            elif c == "-d" or c == "--debug":
+                    sys.exit(1)
+            elif cmd in ("-d", "--debug"):
                 # Are we debugging?
                 if i < len(sys.argv) - 1:
-                    v = sys.argv[i + 1]
-                    if v == "true" or v == "yes" or v == "1":
+                    value = sys.argv[i + 1].lower()
+                    if v in ("true", "yes", "1"):
                         debug = True
                         print("Extra debugging information will be printed during decoding")
-                    elif v == "false" or v == "no" or v == "0":
+                    elif value in ("false", "no", "0"):
                         debug = False
                     else:
-                        print("[ERROR] bad argument for -d/--debug: " + v)
-                        sys.exit(0)
+                        print("[ERROR] bad argument for -d/--debug: " + value)
+                        sys.exit(1)
                     i += 2
                 else:
                     print("[ERROR] missing argument for -d/--debug")
-                    sys.exit(0)
-            elif c[0] == "-":
+                    sys.exit(1)
+            elif cmd[0] == "-":
                 # Mis-formed option
-                print("[ERROR] unrecognized option: " + c)
-                sys.exit(0)
+                print("[ERROR] unrecognized option: " + cmd)
+                sys.exit(1)
             else:
                 i += 1
-            if i >= len(sys.argv):
-                done = True
+            if i >= len(sys.argv): done = True
         
         # If no version info shown, show welcome
-        if showedVersion is False:
+        if showed_version is False:
             # Print welcome
             print("XBeeParser -- the XBee Packet Decoder")
 
@@ -2023,16 +2044,16 @@ if __name__ == '__main__':
         skip = False
         for i in range(1, len(sys.argv)):
             if skip is False:
-                c = sys.argv[i]
-                if c[0] != "-":
-                    fs = fs + c
+                octet = sys.argv[i]
+                if octet[0] != "-":
+                    packet += octet
                 else:
                     skip = True
             else:
                 skip = False
-        if len(fs) > 8:
+        if len(packet) > 8:
             # Frame has to have at least four octets
-            processPacket(fs)
+            process_packet(packet)
     else:
         print("[ERROR] No Data provided")
     sys.exit(0)
