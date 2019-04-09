@@ -126,8 +126,7 @@ def process_packet(packet):
     done = False
     i = 0
     while done is False:
-        c = packet[i]
-        if c == " ":
+        if packet[i] == " ":
             packet = packet[0:i] + packet[i + 1:]
         else:
             i += 1
@@ -185,11 +184,11 @@ def process_packet(packet):
     # Look for XBee frame types and decode the data individually
     cmd = values[3]
     if cmd == XBEE_CMD_AT:
-        decodeSendATCommand(values)
+        decode_send_at_cmd(values)
     elif cmd == XBEE_CMD_QUEUE_PARAM_VALUE:
-        decodeParamQueueRequest(values)
+        decode_param_queue_req(values)
     elif cmd == XBEE_CMD_ZIGBEE_TRANSMIT_REQ:
-        decodeZigbeeTransitRequest(values)
+        decode_zb_transmit_req(values)
     elif cmd == XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME:
         decodeExplicitZigbeeCmdRequest(values)
     elif cmd == XBEE_CMD_REMOTE_CMD_REQ:
@@ -227,54 +226,57 @@ def process_packet(packet):
     elif cmd == XBEE_CMD_JOIN_NOTIFICATION_STATUS:
         decodeJoinNotification(values)
     else:
-        print("[ERROR] Unknown or not-yet-supported frame type: " + get_hex(values[3],2))
+        print("[ERROR] Unknown or not-yet-supported frame type: " + get_hex(values[3]))
         return
-    print(pad_text("Checksum") + get_hex(checksum,2))
+    print(pad_text("Checksum") + get_hex(calc_check_sum))
 
 
 ##########################################################################
 # This section comprises starting points for specific XBee packet types. #
 ##########################################################################
 
-def decodeSendATCommand(data):
-    # The Xbee is sending an XBee AT command packet (frame ID 0x08)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_send_at_cmd(data):
+    """
+    The Xbee is sending an XBee AT command packet (frame ID 0x08).
+    
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
 
     decodeATCommon(data, "Issue local AT command", "None")
 
 
-def decodeParamQueueRequest(data):
-    # The Xbee is queing an XBee AT command packet (frame ID 0x09)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_param_queue_req(data):
+    """
+    The Xbee is queing an XBee AT command packet (frame ID 0x09).
+    
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
 
     decodeATCommon(data, "Queue AT command parameter value", "Read queued")
 
 
-def decodeZigbeeTransitRequest(data):
-    # The Xbee has issues a basic Zigbee command (frame ID 0x10)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_zb_transmit_req(data):
+    """
+    The Xbee has issues a basic Zigbee command (frame ID 0x10).
+    
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
 
     printStandardHeader("Issue basic Zigbee request", data, 3)
-    print(pad_text("Radius") + get_hex(data[15],2))
+    print(pad_text("Radius") + get_hex(data[15]))
     getSendOptions(data[16])
     
-    ds = ""
-    ps = ""
+    data_str = ""
+    char_str = ""
     length = (data[1] << 8) + data[2] - 14
     if length > 0:
         for i in range(17, 17 + length):
-            ds += get_hex(data[i],2)
-            ps += chr(data[i])
-        print(pad_text("Data bytes (" + str(length) + ")") + ds + " (Ascii: " + ps + ")")
+            data_str += get_hex(data[i],2)
+            char_str += chr(data[i])
+        print(pad_text("Data bytes (" + str(length) + ")") + data_str + " (Ascii: " + char_str + ")")
 
 
 def decodeExplicitZigbeeCmdRequest(data):
@@ -1089,7 +1091,7 @@ def decodeZDO(data, cmd):
         print(pad_text("  Endpoint") + str(data[3]))
     elif cmd == 0x8004:
         # Simple Descriptor Response
-        getSimpleDescriptor(data, 3)
+        get_simple_desc(data, 3)
     elif cmd == 0x0013:
         # ZDO Device Announce
         read64bitSserdda(data, 3)
@@ -1627,35 +1629,36 @@ def getNodeDescriptor(data, start):
     print(pad_text("  Descriptor capability field") + (fs if len(fs) > 0 else "No bits set"))
 
 
-def getSimpleDescriptor(data, start):
-    # Display the ZDO Simple Descriptor response
-    # Parameters:
-    #   1. Array - the packet data
-    #   2. Integer - the index of the start of the descriptor
-    # Returns:
-    #   Nothing
-
-    print(pad_text("  Endpoint") + get_hex(data[start],2))
-    print(pad_text("  App profile ID") + get_hex(data[start + 1] + (data[start + 2] << 8),4))
-    print(pad_text("  App device ID") + get_hex(data[start + 3] + (data[start + 4] << 8),4))
-    print(pad_text("  App device version") + get_hex((data[start + 5] >> 4),2))
+def get_simple_desc(frame, start):
+    """
+    Display the ZDO Simple Descriptor response.
     
-    count = data[start + 6]
-    print(pad_text("  Input cluster count") + get_hex(count,2))
+    Args:
+        frame (list): The packet data.
+        start (int):  The index of the start of the descriptor.
+    """
+
+    print(pad_text("  Endpoint") + get_hex(frame[start]))
+    print(pad_text("  App profile ID") + get_hex(frame[start + 1] + (frame[start + 2] << 8), 4))
+    print(pad_text("  App device ID") + get_hex(frame[start + 3] + (frame[start + 4] << 8), 4))
+    print(pad_text("  App device version") + get_hex(frame[start + 5] >> 4))
+    
+    count = frame[start + 6]
+    print(pad_text("  Input cluster count") + get_hex(count))
     if count != 0:
         # Display the list of input clusters
-        fs = ""
-        for i in range (7, 7 + (count * 2), 2): fs = fs + get_hex(data[i] + (data[i + 1] << 8), 4) + ", "
-        print(pad_text("  Input clusters") + fs[0:-2])
+        text = ""
+        for i in range (7, 7 + (count * 2), 2): text += (get_hex(frame[i] + (frame[i + 1] << 8), 4) + ", ")
+        print(pad_text("  Input clusters") + text[0:-2])
         start += (count * 2)
     
-    count = data[start + 7]
-    print(pad_text("  Output cluster count") + get_hex(count,2))
+    count = frame[start + 7]
+    print(pad_text("  Output cluster count") + get_hex(count))
     if count != 0:
         # Display the list of output clusters
-        fs = ""
-        for i in range (7, 7 + (count * 2), 2): fs = fs + get_hex(data[i] + (data[i + 1] << 8), 4) + ", "
-        print(pad_text("  Output clusters") + fs[0:-2])
+        text = ""
+        for i in range (7, 7 + (count * 2), 2): text += (get_hex(frame[i] + (frame[i + 1] << 8), 4) + ", ")
+        print(pad_text("  Output clusters") + text[0:-2])
 
 
 def get_digital_channel_mask(frame, start):
