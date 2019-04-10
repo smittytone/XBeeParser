@@ -13,7 +13,8 @@
 # Program library imports                                                #
 ##########################################################################
 
-import sys, math
+import sys
+import math
 
 ##########################################################################
 # Constants covering key XBee and Zigbee commands, data types, etc.      #
@@ -88,13 +89,13 @@ SPACE_STRING = "                                                             "
 APP_VERSION = "1.0.6"
 
 # ZCL Global Command names
-ZCLCommmands = ("Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
-                "Write Attributes Response", "Write Attributes No Response", "Configure Reporting", "Configure Reporting Response",
-                "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
-                "Discover Attributes", "Discover Attributes Response", "Read Attributes Structured", "Write Attributes Structured",
-                "Write Attributes Structured Response", "Discover Commands Received", "Discover Commands Received Response",
-                "Discover Commands Generated", "Discover Commands Generated Response", "Discover Attributes Extended",
-                "Discover Attributes Extended Response")
+ZCL_CMDS = ("Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
+            "Write Attributes Response", "Write Attributes No Response", "Configure Reporting", "Configure Reporting Response",
+            "Read Reporting Configuration", "Read Reporting Configuration Response", "Report Attributes", "Default Response",
+            "Discover Attributes", "Discover Attributes Response", "Read Attributes Structured", "Write Attributes Structured",
+            "Write Attributes Structured Response", "Discover Commands Received", "Discover Commands Received Response",
+            "Discover Commands Generated", "Discover Commands Generated Response", "Discover Attributes Extended",
+            "Discover Attributes Extended Response")
 
 
 ##########################################################################
@@ -204,27 +205,27 @@ def process_packet(packet):
     elif cmd == XBEE_CMD_ZIGBEE_RECEIVE_PACKET:
         decode_zb_rx_packet(values)
     elif cmd == XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR:
-        decodeZigbeeRXIndicator(values)
+        decode_zb_rx_indicator(values)
     elif cmd == XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR:
-        decodeZigbeeDataSampleRXIndicator(values)
+        decode_zb_sample_rx_indicator(values)
     elif cmd == XBEE_CMD_XBEE_SENSOR_READ_INDICATOR:
-        decodeXBeeSensorReadIndicator(values)
+        decode_xb_sensor_read_indicator(values)
     elif cmd == XBEE_CMD_NODE_ID_INDICATOR:
-        decodeNodeIDIndicator(values)
+        decode_node_id_indicator(values)
     elif cmd == XBEE_CMD_REMOTE_CMD_RESPONSE:
-        decodeRemoteATCommand(values)
+        decode_remote_at_cmd(values)
     elif cmd == XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS:
-        decodeFirmwareUpdate(values)
+        decode_firmware_update(values)
     elif cmd == XBEE_CMD_ROUTE_RECORD_INDICATOR:
-        decodeRouteRecordIndicator(values)
+        decode_route_record_indicator(values)
     elif cmd == XBEE_CMD_DEVICE_AUTH_INDICATOR:
-        decodeDeviceAuthIndicator(values)
+        decode_dev_auth_indicator(values)
     elif cmd == XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR:
-        decodeManyToOneRouteIndicator(values)
+        decode_many_one_route_indicator(values)
     elif cmd == XBEE_CMD_REGISTER_DEVICE_JOIN_STATUS:
-        decodeDeviceJoinStatus(values)
+        decode_dev_join_status(values)
     elif cmd == XBEE_CMD_JOIN_NOTIFICATION_STATUS:
-        decodeJoinNotification(values)
+        decode_join_notification(values)
     else:
         print("[ERROR] Unknown or not-yet-supported frame type: " + get_hex(values[3]))
         return
@@ -243,7 +244,7 @@ def decode_send_at_cmd(data):
         data (list): The packet data as a collection of integers.
     """
 
-    decodeATCommon(data, "Issue local AT command", "None")
+    decode_at_common(data, "Issue local AT command", "None")
 
 
 def decode_param_queue_req(data):
@@ -254,7 +255,7 @@ def decode_param_queue_req(data):
         data (list): The packet data as a collection of integers.
     """
 
-    decodeATCommon(data, "Queue AT command parameter value", "Read queued")
+    decode_at_common(data, "Queue AT command parameter value", "Read queued")
 
 
 def decode_zb_tx_req(data):
@@ -265,7 +266,7 @@ def decode_zb_tx_req(data):
         data (list): The packet data as a collection of integers.
     """
 
-    printStandardHeader("Issue basic Zigbee request", data, 3)
+    print_standard_header("Issue basic Zigbee request", data, 3)
     print(pad_text("Radius") + get_hex(data[15]))
     get_send_options(data[16])
 
@@ -287,7 +288,7 @@ def decode_explicit_cmd_req(data):
         data (list): The packet data as a collection of integers.
     """
 
-    printStandardHeader("Issue explicit Zigbee request", data, 3)
+    print_standard_header("Issue explicit Zigbee request", data, 3)
     print(pad_text("Source endpoint") + get_hex(data[15]))
     print(pad_text("Destination endpoint") + get_hex(data[16]))
 
@@ -308,7 +309,7 @@ def decode_explicit_cmd_req(data):
             decode_zdo(zb_data, cluster_id)
         else:
             # ZCL operation
-            decodeZCLFrame(zb_data)
+            decode_zcl_frame(zb_data)
 
 
 def decode_remote_cmd_req(data):
@@ -319,10 +320,10 @@ def decode_remote_cmd_req(data):
         data (list): The packet data as a collection of integers.
     """
 
-    printStandardHeader("Remote AT command request", data, 3)
+    print_standard_header("Remote AT command request", data, 3)
     get_send_options(data[15])
     print(pad_text("XBee AT command") + "\"" + chr(data[16]) + chr(data[17]) + "\"")
-    decodeATParamCommon(data, 18, 15, "Read request")
+    decode_at_param_common(data, 18, 15, "Read request")
 
 
 def decode_create_source_route_req(data):
@@ -333,7 +334,7 @@ def decode_create_source_route_req(data):
         data (list): The packet data as a collection of integers.
     """
 
-    printStandardHeader("Create source route request", data, 3)
+    print_standard_header("Create source route request", data, 3)
     print(pad_text("Route Command Options") + get_hex(data[15]))
 
     address_num = data[16]
@@ -360,13 +361,13 @@ def decode_at_rsp(data):
         data (list): The packet data as a collection of integers.
     """
 
-    cmd_str = decodeATCommon(data, "Local AT command response")
+    cmd_str = decode_at_common(data, "Local AT command response")
     get_at_status(data[7])
     length = (data[1] << 8) + data[2] - 5
-    data_value = print_frame_data(data, 8, length)
+    payload = print_frame_data(data, 8, length)
 
     # Trap ND packets
-    if cmd_str == "ND": decodeNIData(data_value, 0)
+    if cmd_str == "ND": decode_node_data(payload, 0)
 
 
 def decode_modem_status(data):
@@ -405,201 +406,213 @@ def decode_zb_rx_packet(data):
         data (list): The packet data as a collection of integers.
     """
 
-    printBasicHeader("Zigbee receive packet (basic)", data, 3)
+    print_basic_header("Zigbee receive packet (basic)", data, 3)
     get_packet_status(data[14])
 
     length = (data[1] << 8) + data[2] - 12
     _ = print_frame_data(data, 15, length)
 
 
-def decodeZigbeeRXIndicator(data):
-    # The Xbee has received an explicit Zigbee ZCL packet (frame ID 0x91)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_zb_rx_indicator(data):
+    """
+    The Xbee has received an explicit Zigbee ZCL packet (frame ID 0x91).
 
-    printBasicHeader("Zigbee explicit RX indicator", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("Zigbee explicit RX indicator", data, 3)
     print(pad_text("Source endpoint") + get_hex(data[14]))
     print(pad_text("Destination endpoint") + get_hex(data[15]))
 
-    cid = (data[16] << 8) + data[17]
-    print(pad_text("Cluster ID") + get_hex(cid, 4))
+    cluster_id = (data[16] << 8) + data[17]
+    print(pad_text("Cluster ID") + get_hex(cluster_id, 4))
 
-    pid = (data[18] << 8) + data[19]
-    print(pad_text("Profile ID") + get_hex(pid, 4))
+    profile_id = (data[18] << 8) + data[19]
+    print(pad_text("Profile ID") + get_hex(profile_id, 4))
 
     get_packet_status(data[20])
 
     length = (data[1] << 8) + data[2] - 18
-    dv = print_frame_data(data, 21, length)
-    if dv is True:
+    payload = print_frame_data(data, 21, length)
+    if payload is True:
         if pid == 0x0000:
-            decode_zdo(dv, cid)
+            decode_zdo(payload, cluster_id)
         elif pid == 0xC105:
             # Trap Digi's *other* node descriptor, send on button press
-            decodeNIData(dv, 0)
+            decode_node_data(payload, 0)
         else:
-            decodeZCLFrame(dv)
+            decode_zcl_frame(payload)
 
 
-def decodeZigbeeDataSampleRXIndicator(data):
-    # The Xbee has received a Zigbee IO Data Sample RX Indicator (frame ID 0x92)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_zb_sample_rx_indicator(data):
+    """
+    The Xbee has received a Zigbee IO Data Sample RX Indicator (frame ID 0x92).
 
-    printBasicHeader("Zigbee IO data sample", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("Zigbee IO data sample", data, 3)
     get_packet_status(data[14])
 
     print(pad_text("Number of samples") + str(data[15]))
-    nd = (data[16] << 8) + data[17]
+    node_desc = (data[16] << 8) + data[17]
     start = 19
-    if nd > 0:
+    if node_desc > 0:
         get_digital_channel_mask(data, 16)
         start = 21
-    if data[18] > 0:
-        get_analog_channel_mask(data, start)
+    if data[18] > 0: get_analog_channel_mask(data, start)
 
 
-def decodeXBeeSensorReadIndicator(data):
-    # The Xbee has received an XBee sensor read response (frame ID 0x94)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_xb_sensor_read_indicator(data):
+    """
+    The Xbee has received an XBee sensor read response (frame ID 0x94).
 
-    printBasicHeader("XBee sensor read indicator response", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("XBee sensor read indicator response", data, 3)
     get_packet_status(data[14])
     get_onewire_status(data[15])
 
     # Read the sensor data
     values = []
-    noSensors = 0
+    num_sensors = 0
     for i in range(16, 24, 2):
-        a = (data[i] << 8) + data[i + 1]
-        values.append(a)
-        if a == 0xFF: noSensors = noSensors + 1
-    if noSensors == 4: print("No AD sensors found")
+        value = (data[i] << 8) + data[i + 1]
+        values.append(value)
+        if value == 0xFF: num_sensors += 1
+    if num_sensors == 4:
+        print("No AD sensors found")
     else:
-        es = ""
-        for i in range(0, 4): es = es + get_hex(values[i], 4) + ", "
-        es = es[0:len(es)-2]
-        print(pad_text("AD sensor values") + es)
+        sensor_str = ""
+        for i in range(0, 4): sensor_str += (get_hex(values[i], 4) + ", ")
+        if sensor_str is True: sensor_str = sensor_str[0:len(es)-2]
+        print(pad_text("AD sensor values") + sensor_str)
 
     # Read the thermometer data
-    a = (data[24] << 8) + data[25]
-    if a == 0xFFFF:
+    value = (data[24] << 8) + data[25]
+    if value == 0xFFFF:
         print("No thermometer found")
     else:
-        print(pad_text("Thermometer reading") + get_hex(a, 4))
+        print(pad_text("Thermometer reading") + get_hex(value, 4))
 
 
-def decodeNodeIDIndicator(data):
-    # The Xbee has received an XBee remote AT response packet (frame ID 0x95)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_node_id_indicator(data):
+    """
+    The Xbee has received an XBee remote AT response packet (frame ID 0x95).
 
-    printBasicHeader("Node identification indicator response", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("Node identification indicator response", data, 3)
     get_packet_status(data[14])
-    l = (data[1] << 8) + data[2] - 25
-    decodeNIData(data, 15)
+    #length = (data[1] << 8) + data[2] - 25
+    decode_node_data(data, 15)
 
 
-def decodeRemoteATCommand(data):
-    # The Xbee has received an XBee remote AT response packet (frame ID 0x97)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_remote_at_cmd(data):
+    """
+    The Xbee has received an XBee remote AT response packet (frame ID 0x97).
 
-    printStandardHeader("Remote AT command response", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_standard_header("Remote AT command response", data, 3)
     print(pad_text("XBee AT command") + chr(data[15]) + chr(data[16]))
     get_at_status(data[17])
     length = (data[1] << 8) + data[2] - 15
     _ = print_frame_data(data, 18, length)
 
 
-def decodeFirmwareUpdate(data):
-    # The Xbee has received an XBee firmware update packet (frame ID 0xA0)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_firmware_update(data):
+    """
+    The Xbee has received an XBee firmware update packet (frame ID 0xA0).
 
-    printBasicHeader("XBee firmware update", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("XBee firmware update", data, 3)
     get_packet_status(data[14])
     get_bootloader_msg(data[15])
     print(pad_text("Block number") + str(data[16]))
     read_64_bit_address(data, 17, "Target address (64-bit)")
 
 
-def decodeRouteRecordIndicator(data):
-    # The Xbee has received a routing info packet (frame ID 0xA1)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_route_record_indicator(data):
+    """
+    The Xbee has received a routing info packet (frame ID 0xA1)
 
-    printBasicHeader("Route record indicator response", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("Route record indicator response", data, 3)
     get_packet_status(data[14])
 
-    n = data[15]
-    print(pad_text("Number of addresses") + get_hex(n))
+    num_address = data[15]
+    print(pad_text("Number of addresses") + get_hex(num_address))
 
-    l = (data[1] << 8) + data[2] - 13
-    if l > 0:
-        a = 0
-        c = 1
-        for i in range(16, 16 + l, 2):
-            a = (data[i] << 8) + data[i + 1]
-            print(pad_text("  Address " + str(c)) + get_hex(a, 4))
-            c += 1
-    elif l < n * 2:
-        print("[ERROR]: missing address data - " + str(l / 2) + " included, " + n + " expected")
-        sys.exit(0)
-
-
-def decodeDeviceAuthIndicator(data):
-    # The XBee has received a device-authenticated packet (frame ID 0xA2)
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
-
-    printBasicHeader("Device Authenticated Indicator", data, 3)
+    length = (data[1] << 8) + data[2] - 13
+    if length > 0:
+        address = 0
+        address_count = 1
+        for i in range(16, 16 + length, 2):
+            address = (data[i] << 8) + data[i + 1]
+            print(pad_text("  Address " + str(c)) + get_hex(address, 4))
+            address_count += 1
+    elif length < num_address * 2:
+        print("[ERROR]: missing address data - " + str(length / 2) + " included, " + num_address + " expected")
+        sys.exit(1)
 
 
-def decodeManyToOneRouteIndicator(data):
-    # The Xbee has received a many-to-one routing info packet (frame ID 0xA3)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_dev_auth_indicator(data):
+    """
+    The XBee has received a device-authenticated packet (frame ID 0xA2).
 
-    printBasicHeader("Many-to-one routing information", data, 3)
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("Device Authenticated Indicator", data, 3)
 
 
-def decodeDeviceJoinStatus(data):
-    # The Xbee has received a join notification status packet (frame ID 0xA5)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_many_one_route_indicator(data):
+    """
+    The Xbee has received a many-to-one routing info packet (frame ID 0xA3).
+
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
+
+    print_basic_header("Many-to-one routing information", data, 3)
+
+
+def decode_dev_join_status(data):
+    """
+    The Xbee has received a join notification status packet (frame ID 0xA5).
+
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
 
     print(pad_text("XBee command ID") + get_hex(data[3]) + " \"Join notification status\"")
     print(pad_text("XBee frame ID") + get_hex(data[4]))
     get_device_join_status(data[5])
 
 
-def decodeJoinNotification(data):
-    # The Xbee has received a join notification status packet (frame ID 0xA5)
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_join_notification(data):
+    """
+    The Xbee has received a join notification status packet (frame ID 0xA5).
+
+    Args:
+        data (list): The packet data as a collection of integers.
+    """
 
     print(pad_text("XBee command ID") + get_hex(data[3]) + " \"Register joining device status\"")
     print("Parent:")
@@ -614,67 +627,77 @@ def decodeJoinNotification(data):
 # This section comprises utilities access by the above decoder functions  #
 ###########################################################################
 
-def decodeATCommon(data, cmd, no_param_message=""):
-    # Code common to AT command-related decoders
-    # Parameters:
-    #   1. Array - the packet data
-    #   2. String - the command information to print
-    #   3. String - text to print if there is no parameter value. This
-    #               is optional; if omitted, only the header info is
-    #               printed
-    # Returns:
-    #   String - the AT command
+def decode_at_common(data, x_cmd, no_param_message=""):
+    """
+    Code common to AT command-related decoders.
 
-    char_str = chr(data[5]) + chr(data[6])
-    print(pad_text("XBee command ID") + get_hex(data[3]) + " \"" + cmd + "\"")
+    Args:
+        data             (list): The packet data as a collection of integers.
+        x_cmd            (str):  The command information to print
+        no_param_message (str):  Text to print if there is no parameter value. This
+                                 is optional; if omitted, only the header info is
+                                 printed.
+
+    Returns:
+        str: The AT command
+    """
+
+    cmd_str = chr(data[5]) + chr(data[6])
+    print(pad_text("XBee command ID") + get_hex(data[3]) + " \"" + x_cmd + "\"")
     print(pad_text("XBee frame ID") + get_hex(data[4]))
-    print(pad_text("XBee AT command") + "\"" + char_str + "\"")
-    if no_param_message is True: decodeATParamCommon(data, 7, 4, no_param_message)
-    return char_str
+    print(pad_text("XBee AT command") + "\"" + cmd_str + "\"")
+    if no_param_message is True: decode_at_param_common(data, 7, 4, no_param_message)
+    return cmd_str
 
 
-def decodeATParamCommon(data, startIndex, delta, no_param_message):
-    # Code used by the above function
-    # Parameters:
-    #   1. Array - the packet data
-    #   2. Integer - the index of the start of the information in the packet
-    #   3. Integer - the length of the header data
-    #   4. String - the text to print if there are no parameters included
-    # Returns:
-    #   Nothing
+def decode_at_param_common(data, start, delta, no_param_message):
+    """
+    Code used by 'decode_at_common()'.
+
+    Args:
+        data             (list): The packet data as a collection of integers.
+        start            (int):  The index of the start of the information in the packet.
+        delta            (int):  The length of the header data.
+        no_param_message (str):  Text to print if there is no parameter value. This
+                                 is optional; if omitted, only the header info is
+                                 printed.
+    """
+
     data_str = ""
     length = (data[1] << 8) + data[2] - delta
     if length > 0:
-        for i in range(startIndex, startIndex + length): data_str += get_hex(data[i])
+        for i in range(start, start + length): data_str += get_hex(data[i])
     else:
         data_str = no_param_message
     print(pad_text("Command parameter value") + data_str)
 
 
-def printBasicHeader(cmd, data, start):
-    # Generic packet header decoding for a number of the above functions
-    # Parameters:
-    #   1. String - the command info to print
-    #   2. Array - the packet data
-    #   3. Integer - the start of the information in the frame data
-    # Returns:
-    #   Nothing
+def print_basic_header(x_cmd, data, start):
+    """
+    Generic packet header decoding for a number of the above functions.
 
-    print(pad_text("XBee command ID") + get_hex(data[start]) + " \"" + cmd + "\"")
+    Args:
+        x_cmd (str):  The XBee command.
+        data  (list): The packet data as a collection of integers.
+        start (int):  The index of the start of the information in the packet.
+    """
+
+    print(pad_text("XBee command ID") + get_hex(data[start]) + " \"" + x_cmd + "\"")
     read_64_bit_address(data, start + 1)
     print(pad_text("Address (16-bit)") + get_hex(((data[start + 9] << 8) + data[start + 10]), 4))
 
 
-def printStandardHeader(cmd, data, start):
-    # Generic packet header decoding for a number of the above functions
-    # Parameters:
-    #   1. String - the command info to print
-    #   2. Array - the packet data
-    #   3. Integer - the start of the information in the frame data
-    # Returns:
-    #   Nothing
+def print_standard_header(x_cmd, data, start):
+    """
+    Generic packet header decoding for a number of the above functions.
 
-    print(pad_text("XBee command ID") + get_hex(data[start]) + " \"" + cmd + "\"")
+    Args:
+        x_cmd (str):  The XBee command.
+        data  (list): The packet data as a collection of integers.
+        start (int):  The index of the start of the information in the packet.
+    """
+
+    print(pad_text("XBee command ID") + get_hex(data[start]) + " \"" + x_cmd + "\"")
     print(pad_text("XBee frame ID") + get_hex(data[start + 1]))
     read_64_bit_address(data, start + 2)
     print(pad_text("Address (16-bit)") + get_hex(((data[start + 10] << 8) + data[start + 11]), 4))
@@ -692,6 +715,7 @@ def print_frame_data(data, start, length):
     Returns:
         list: The extracted data.
     """
+
     data_str = ""
     data_values = []
     if length > 0:
@@ -702,29 +726,30 @@ def print_frame_data(data, start, length):
     return data_values
 
 
-def decodeNIData(data, start):
-    # Generic Node Ident data extrator
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    #   2. Integer - index of the start of the data
-    # Returns:
-    #   Nothing
+def decode_node_data(data, start):
+    """
+    Generic Node Ident data extrator.
+
+    Args:
+        data (list): The packet data as a collection of integers.
+        start (int): The index of the start of the data.
+    """
 
     print(pad_text("Source address (16-bit)") + get_hex(((data[start] << 8) + data[start + 1]), 4))
     read_64_bit_address(data, start + 2, "Source address (64-bit)")
 
     index = start + 10
-    nis = ""
+    node_str = ""
     done = False
     while done is False:
         if (data[index]) != 0x00:
-            nis += chr(data[index])
+            node_str += chr(data[index])
         else:
             done = True
         index += 1
 
-    if nis is True and nis[0] != " ":
-        print(pad_text("NI string") + nis)
+    if node_str is True and node_str[0] != " ":
+        print(pad_text("NI string") + node_str)
     else:
         print(pad_text("NI string") + "Default")
 
@@ -745,153 +770,164 @@ def decodeNIData(data, start):
 #      ie. LSB first, MSB last                                            #
 ###########################################################################
 
-def decodeZCLFrame(frameData):
-    # Decode a full ZCL frame
-    # Parameters:
-    #   1. Array - the packet data as a collection of integers
-    # Returns:
-    #   Nothing
+def decode_zcl_frame(frame_data):
+    """
+    Decode a full ZCL frame.
 
-    global ZCLCommmands
+    Args:
+        frame_data (list): The packet data as a collection of integers.
+    """
 
-    manSpec = False
-    globalCmd = True
+    has_man_spec = False
+    is_global_cmd = True
 
     # Decode and display the frame control byte
-    fc = frameData[0]
-    fcs = get_binary(fc)
-    print(pad_text("  Frame Control Byte") + get_hex(fc) + " [b" + fcs + "]")
+    frame_ctrl = frame_data[0]
+    frame_ctrl_str = get_binary(frame_ctrl)
+    print(pad_text("  Frame Control Byte") + get_hex(frame_ctrl) + " [b" + frame_ctrl_str + "]")
 
-    if fc & 0x01 == 0x01:
+    if frame_ctrl & 0x01 == 0x01:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Command is specific to cluster")
-        globalCmd = False
+        is_global_cmd = False
     else:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Command is global to ZCL")
 
-    if fc & 0x08 == 0:
+    if frame_ctrl & 0x08 == 0:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: client to server")
     else:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Direction: server to client")
 
-    if fc & 0x04 == 0x04:
+    if frame_ctrl & 0x04 == 0x04:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Manufacturer-specific commands in data")
-        manSpec = True
+        has_man_spec = True
     else:
         print(SPACE_STRING[0:TEXT_SIZE] + "  No manufacturer-specific commands in data")
 
-    if fc & 0x10 == 0x10:
+    if frame_ctrl & 0x10 == 0x10:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Default response disabled")
     else:
         print(SPACE_STRING[0:TEXT_SIZE] + "  Default response enabled")
 
     index = 1
-    if manSpec is True:
-        mc = frameData[1] + (frameData[2] << 8)
-        print(pad_text("  Manufacturer code") + get_hex(mc, 4))
+    if has_man_spec is True:
+        manu_code = frame_data[1] + (frame_data[2] << 8)
+        print(pad_text("  Manufacturer code") + get_hex(manu_code, 4))
         index = 3
 
     # Decode and display the ZCL frame header's remaining two bytes
-    tsn = frameData[index]
-    cid = frameData[index + 1]
-    print(pad_text("  Transaction seq. number") + get_hex(tsn))
+    tran_seq_num = frame_data[index]
+    cmd_id = frame_data[index + 1]
+    print(pad_text("  Transaction seq. number") + get_hex(tran_seq_num))
 
-    if globalCmd is True:
-        if cid < len(ZCLCommmands):
-            print(pad_text("  Global command") + get_hex(cid) + " - " + ZCLCommmands[cid])
+    if is_global_cmd is True:
+        if cmd_id < len(ZCL_CMDS):
+            print(pad_text("  Global command") + get_hex(cmd_id) + " - " + ZCL_CMDS[cmd_id])
         else:
-            print(pad_text("  Global command") + get_hex(cid) + " - Unknown")
+            print(pad_text("  Global command") + get_hex(cmd_id) + " - Unknown")
     else:
-        print(pad_text("  Cluster command") + get_hex(cid))
+        print(pad_text("  Cluster command") + get_hex(cmd_id))
 
     # Payload is at 'index' + 2
-    if globalCmd is True and manSpec is False:
+    if is_global_cmd is True and has_man_spec is False:
         # Only decode global commands for now
-        decodeZCLCommand(cid, frameData, index + 2)
+        decode_zcl_cmd(cmd_id, frame_data, index + 2)
     else:
         # Dump the data, which contains Cluster-specific info
-        ds = ""
-        for i in range(index + 2, len(frameData)): ds += get_hex(frameData[i])
-        print(pad_text("  Data") + ds)
+        data_str = ""
+        for i in range(index + 2, len(frame_data)): data_str += get_hex(frameData[i])
+        print(pad_text("  Data") + data_str)
 
 
-def decodeZCLCommand(comd, data, start):
-    # Jump table for general ZCL commands
+def decode_zcl_cmd(z_cmd, frame_data, start):
+    """
+    Jump table for general ZCL commands.
 
-    if comd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
-        decodeZCLReadAttributeReq(data, start)
-    elif comd in (ZCL_GLOBAL_CMD_READ_ATTR_RSP, ZCL_GLOBAL_CMD_WRITE_ATTR_NO):
-        decodeAttributeList(data, start, ATT_TYPE_READ_RSP)
-    elif comd in (ZCL_GLOBAL_CMD_WRITE_ATTR_REQ, ZCL_GLOBAL_CMD_WRITE_ATTR_UND):
-        decodeAttributeList(data, start, ATT_TYPE_WRITE_REQ)
-    elif comd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
-        decodeAttributeList(data, start, ATT_TYPE_WRITE_RSP)
-    elif comd in (ZCL_GLOBAL_CMD_DISC_RCMDS_REQ, ZCL_GLOBAL_CMD_DISC_GCMDS_REQ):
+    Args:
+        z_cmd      (int):  The ZCL command.
+        frame_data (list): The packet data as a collection of integers.
+        start      (int):  The start byte of the payload.
+    """
+
+    if z_cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
+        decode_zcl_read_attribute_req(data, start)
+    elif z_cmd in (ZCL_GLOBAL_CMD_READ_ATTR_RSP, ZCL_GLOBAL_CMD_WRITE_ATTR_NO):
+        decode_zcl__attribute_req(data, start, ATT_TYPE_READ_RSP)
+    elif z_cmd in (ZCL_GLOBAL_CMD_WRITE_ATTR_REQ, ZCL_GLOBAL_CMD_WRITE_ATTR_UND):
+        decode_zcl_attribute_list(data, start, ATT_TYPE_WRITE_REQ)
+    elif z_cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
+        decode_zcl_attribute_list(data, start, ATT_TYPE_WRITE_RSP)
+    elif z_cmd in (ZCL_GLOBAL_CMD_DISC_RCMDS_REQ, ZCL_GLOBAL_CMD_DISC_GCMDS_REQ):
         decode_cmds_req(data, start)
-    elif comd in (ZCL_GLOBAL_CMD_DISC_RCMDS_RSP, ZCL_GLOBAL_CMD_DISC_GCMDS_RSP):
+    elif z_cmd in (ZCL_GLOBAL_CMD_DISC_RCMDS_RSP, ZCL_GLOBAL_CMD_DISC_GCMDS_RSP):
         decode_cmds_rsp(data, start)
     else:
-        print("  [ERROR] General command " + get_hex(comd) + " not yet supported by this program")
+        print("  [ERROR] General command " + get_hex(z_cmd) + " not yet supported by this program")
 
 
-def decodeZCLReadAttributeReq(data, start):
-    # Decode a ZCL read attribute request
-    # Parameters:
-    #   1. Array - the frame data as a series of integer values
-    #   2. Integer - index of the ZCL data start within the data
-    # Returns:
-    #   Nothing
+def decode_zcl_read_attribute_req(frame_data, start):
+    """
+    Decode a ZCL read attribute request.
 
-    ms = ""
-    es = ""
-    for i in range(start, len(data), 2):
-        v = data[i] + (data[i + 1] << 8)
-        ms += get_hex(v, 4) + ", "
-    ms = ms[0:-2]
-    if len(ms) > 4: es = "s"
-    print(pad_text("  Attribute ID" + es) + ms)
+    Args:
+        frame_data (list): The packet data as a collection of integers.
+        start      (int):  The start byte of the payload.
+    """
+
+    att_str = ""
+    plural_str = ""
+    for i in range(start, len(frame_data), 2):
+        value = frame_data[i] + (frame_data[i + 1] << 8)
+        att_str += get_hex(v, 4) + ", "
+    att_str = att_str[0:-2]
+    if len(att_str) > 4: plural_str = "s"
+    print(pad_text("  Attribute ID" + plural_str) + att_str)
 
 
-def decodeAttributeList(data, start, attType):
-    # Decode a ZCL read attribute response
-    # Parameters:
-    #   1. Array - the frame data as a series of integer values
-    #   2. Integer - index of the ZCL data start within the data
-    #   3. Integer - the attribute class we're investigating, eg. read response,
-    #                write request
-    # Returns:
-    #   Nothing
+def decode_zcl_attribute_list(frame_data, start, att_type):
+    """
+    Decode a ZCL read attribute response
+
+    Args:
+        frame_data (list): The packet data as a collection of integers.
+        start      (int):  The start byte of the payload.
+        att_type   (int):  The attribute ID.
+    """
 
     index = start
     done = False
     while done is False:
         # Get the next attribute record
-        if attType == ATT_TYPE_READ_RSP:
-            index = decodeAttribute(data, index)
-        elif attType == ATT_TYPE_WRITE_REQ:
-            index = decodeAttributeWriteReq(data, index)
-        elif attType == ATT_TYPE_WRITE_RSP:
-            index = decodeAttributeWriteRsp(data, index)
-        if index >= len(data):
-            done = True
+        if att_type == ATT_TYPE_READ_RSP:
+            index = decode_zcl_attribute(frame_data, index)
+        elif att_type == ATT_TYPE_WRITE_REQ:
+            index = decodeAttributeWriteReq(frame_data, index)
+        elif att_type == ATT_TYPE_WRITE_RSP:
+            index = decodeAttributeWriteRsp(frame_data, index)
+        if index >= len(frame_data): done = True
 
 
-def decodeAttribute(data, start):
-    # Display an attribute's metadata
-    # Parameters:
-    #   1. Array - the frame data as a series of integer values
-    #   2. Integer - index of the start of the attribute record within the data
-    # Returns:
-    #   The index of the next attribute in the data
+def decode_zcl_attribute(frame_data, start):
+    """
+    Display an attribute's metadata.
+
+    Args:
+        frame_data (list): The packet data as a collection of integers.
+        start      (int):  The start byte of the payload.
+        att_type   (int):  The attribute ID.
+
+    Returns:
+        int: The updated index ('start' + attribute data length)
+    """
 
     index = start
 
-    print(pad_text("  Attribute ID") + get_hex(data[index] + (data[index + 1] << 8), 4))
-    print(pad_text("  Attribute read status") + get_zcl_attribute_status(data[index + 2]))
-    print(pad_text("  Attribute type") + get_zcl_attribute_type(data[index + 3]))
+    print(pad_text("  Attribute ID") + get_hex(frame_data[index] + (frame_data[index + 1] << 8), 4))
+    print(pad_text("  Attribute read status") + get_zcl_attribute_status(frame_data[index + 2]))
+    print(pad_text("  Attribute type") + get_zcl_attribute_type(frame_data[index + 3]))
 
-    if data[index + 2] == 0:
+    if frame_data[index + 2] == 0:
         # Now get the attribute data
-        index = index + 4 + decodeAttributeData(data, index + 4, data[index + 3])
+        index += (4 + decode_zcl_attribute_data(frame_data, index + 4, frame_data[index + 3]))
     else:
         # Attribute access unsuccessful - just skip it
         index += 4
@@ -899,23 +935,26 @@ def decodeAttribute(data, start):
     return index
 
 
-def decodeAttributeData(data, start, dataType):
-    # Get the attribute's data
-    # Parameters:
-    #   1. Array - the frame data as a series of integer values
-    #   2. Integer - index of the start of the attribute data within
-    #                the ZCL frame, not the start of the attribute record
-    #   3. Integer - the data type of the index
-    # Returns:
-    #   The number of bytes of data read (ie. how far to move the pointer)
+def decode_zcl_attribute_data(frame_data, start, data_type):
+    """
+    Get the attribute's data.
+
+    Args:
+        frame_data (list): The packet data as a collection of integers.
+        start      (int):  The start byte of the payload.
+        data_type  (int):  The data type of the index.
+
+    Returns:
+        int: The number of bytes of data read (ie. how far to move the pointer).
+    """
 
     # How many bytes hold the attribute's data?
-    if get_zcl_attribute_size(dataType) != -1:
+    if get_zcl_attribute_size(data_type) != -1:
         # The data is of a fixed size ('l')
-        return decodeValue(data, start, dataType)
+        return decodeValue(frame_data, start, data_type)
     else:
         # The data is not a fixed size
-        return decode_collection(data, start, dataType)
+        return decode_collection(frame_data, start, data_type)
 
 
 def decodeValue(data, start, dataType):
@@ -944,15 +983,16 @@ def decodeValue(data, start, dataType):
     return size
 
 
-def decode_collection(data, start, data_type):
+def decode_collection(frame_data, start, data_type):
     """
     Decode and display a collection value.
 
     Args:
-        data      (list): The frame data as a series of integer values.
-        start     (int):  The index of the start of the attribute or sub-attribute
-                          data start within the frame
-        data_type (int):  The data type of the index.
+        frame_data (list): The frame data as a series of integer values.
+        start      (int):  The index of the start of the attribute or sub-attribute
+                           data start within the frame
+        data_type  (int):  The data type of the index.
+
     Returns:
         int: The number of bytes read for the data unit.
     """
@@ -961,41 +1001,41 @@ def decode_collection(data, start, data_type):
     data_str = ""
     if data_type in (0x41, 0x42):
         # Octet or char string
-        length = data[index]
-        for j in range(index + 1, index + 1 + length): data_str += chr(data[j])
+        length = frame_data[index]
+        for j in range(index + 1, index + 1 + length): data_str += chr(frame_data[j])
         print(pad_text("  Attribute value") + data_str)
         index += (1 + length)
     elif data_type in (0x43, 0x44):
         # Long octet or char string
-        length = data[index] + (data[index + 1] << 8)
-        for j in range(index + 2, index + 2 + length): data_str += chr(data[j])
+        length = frame_data[index] + (frame_data[index + 1] << 8)
+        for j in range(index + 2, index + 2 + length): data_str += chr(frame_data[j])
         print(pad_text("  Attribute value") + data_str)
         index += (2 + length)
     elif data_type in (0x48, 0x50, 0x51):
         # Array, Set or Bag - collections of the same type so we need
         # to iterate to read in all the element values
         length = 0
-        sub_type = data[index]
-        data_size = get_zcl_attribute_size(data[sub_type])
-        item_count = data[index + 1] + (data[index + 2] << 8)
+        sub_type = frame_data[index]
+        data_size = get_zcl_attribute_size(frame_data[sub_type])
+        item_count = frame_data[index + 1] + (frame_data[index + 2] << 8)
         for j in range(0, item_count):
-            # NOTE decodeAttribute() expects to receive the start of the attribute
+            # NOTE decode_zcl_attribute() expects to receive the start of the attribute
             #      (ie. header + data) not the start of a collection sub-attribute
             #      (ie. data), so we need to adjust the index back to get the
             #      correct bytes
             # NOTE Ignore the nesting limit for now
             adjusted_index = index + 3 + (j * data_size)
-            length += decodeAttributeData(data, adjusted_index, sub_type)
+            length += decode_zcl_attribute_data(frame_data, adjusted_index, sub_type)
         index += (3 + length)
     elif data_type == 0x52:
         # Structure - collection of mixed types, so this is more complex
-        item_count = data[index] + (data[index + 1] << 8)
+        item_count = frame_data[index] + (frame_data[index + 1] << 8)
         length = 0
         item_length = 0
         for j in range(0, item_count):
             adjusted_Index = index + 2 + item_length
-            sub_type = data[adjusted_index]
-            item_length = 1 + decodeAttributeData(data, adjusted_index + 1, sub_type)
+            sub_type = frame_data[adjusted_index]
+            item_length = 1 + decode_zcl_attribute_data(frame_data, adjusted_index + 1, sub_type)
             length += item_length
         index += (2 + length)
     return index - start
@@ -1012,7 +1052,7 @@ def decodeAttributeWriteReq(data, start):
     index = start
     print(pad_text("  Attribute ID") + get_hex(data[index] + (data[index + 1] << 8), 4))
     print(pad_text("  Attribute type") + get_zcl_attribute_type(data[index + 2]))
-    index += (3 + decodeAttributeData(data, index + 3, data[index + 2]))
+    index += (3 + decode_zcl_attribute_data(data, index + 3, data[index + 2]))
     return index
 
 
