@@ -2,7 +2,7 @@
 
 """
 
-XBeeParser 1.0.6
+XBeeParser 1.0.5
 Copyright 2018-19, Tony Smith (@smittytone)
 License: MIT (terms attached to this repo)
 
@@ -21,62 +21,62 @@ import math
 ##########################################################################
 
 # XBee Request Commands
-XBEE_CMD_AT                                 = 0x08 #DONE
-XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09 #DONE
-XBEE_CMD_ZIGBEE_TRANSMIT_REQ                = 0x10 #DONE
-XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME          = 0x11 #DONE
-XBEE_CMD_REMOTE_CMD_REQ                     = 0x17 #DONE
-XBEE_CMD_REMOTE_CMD_SECURE_REQ              = 0x18
-XBEE_CMD_CREATE_SOURCE_ROUTE                = 0x21 #DONE
-XBEE_CMD_REGISTER_DEVICE_JOIN               = 0x24
+XBEE_CMD_AT                                 = 0x08 # pylint: disable=C0326; DONE
+XBEE_CMD_QUEUE_PARAM_VALUE                  = 0x09 # pylint: disable=C0326; DONE
+XBEE_CMD_ZIGBEE_TRANSMIT_REQ                = 0x10 # pylint: disable=C0326; DONE
+XBEE_CMD_EXP_ADDR_ZIGBEE_CMD_FRAME          = 0x11 # pylint: disable=C0326; DONE
+XBEE_CMD_REMOTE_CMD_REQ                     = 0x17 # pylint: disable=C0326; DONE
+XBEE_CMD_REMOTE_CMD_SECURE_REQ              = 0x18 # pylint: disable=C0326;
+XBEE_CMD_CREATE_SOURCE_ROUTE                = 0x21 # pylint: disable=C0326; DONE
+XBEE_CMD_REGISTER_DEVICE_JOIN               = 0x24 # pylint: disable=C0326;
 
 # XBee Response Frame IDs
-XBEE_CMD_AT_RESPONSE                        = 0x88 #DONE
-XBEE_CMD_MODEM_STATUS                       = 0x8A #DONE
-XBEE_CMD_ZIGBEE_TRANSMIT_STATUS             = 0x8B #DONE
-XBEE_CMD_ZIGBEE_RECEIVE_PACKET              = 0x90 #DONE
-XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR            = 0x91 #DONE
-XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92 #DONE
-XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94 #DONE
-XBEE_CMD_NODE_ID_INDICATOR                  = 0x95 #DONE
-XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97 #DONE
-XBEE_CMD_EXTENDED_MODEM_STATUS              = 0x98
-XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0 #DONE
-XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1 #DONE
-XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2 #DONE
-XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3 #DONE
-XBEE_CMD_REGISTER_DEVICE_JOIN_STATUS        = 0xA4 #DONE
-XBEE_CMD_JOIN_NOTIFICATION_STATUS           = 0xA5 #DONE
+XBEE_CMD_AT_RESPONSE                        = 0x88 # pylint: disable=C0326; DONE
+XBEE_CMD_MODEM_STATUS                       = 0x8A # pylint: disable=C0326; DONE
+XBEE_CMD_ZIGBEE_TRANSMIT_STATUS             = 0x8B # pylint: disable=C0326; DONE
+XBEE_CMD_ZIGBEE_RECEIVE_PACKET              = 0x90 # pylint: disable=C0326; DONE
+XBEE_CMD_ZIGBEE_EXP_RX_INDICATOR            = 0x91 # pylint: disable=C0326; DONE
+XBEE_CMD_ZIGBEE_IO_DATA_SAMPLE_RX_INDICATOR = 0x92 # pylint: disable=C0326; DONE
+XBEE_CMD_XBEE_SENSOR_READ_INDICATOR         = 0x94 # pylint: disable=C0326; DONE
+XBEE_CMD_NODE_ID_INDICATOR                  = 0x95 # pylint: disable=C0326; DONE
+XBEE_CMD_REMOTE_CMD_RESPONSE                = 0x97 # pylint: disable=C0326; DONE
+XBEE_CMD_EXTENDED_MODEM_STATUS              = 0x98 # pylint: disable=C0326;
+XBEE_CMD_OTA_FIRMWARE_UPDATE_STATUS         = 0xA0 # pylint: disable=C0326; DONE
+XBEE_CMD_ROUTE_RECORD_INDICATOR             = 0xA1 # pylint: disable=C0326; DONE
+XBEE_CMD_DEVICE_AUTH_INDICATOR              = 0xA2 # pylint: disable=C0326; DONE
+XBEE_CMD_MANY_TO_ONE_ROUTE_REQ_INDICATOR    = 0xA3 # pylint: disable=C0326; DONE
+XBEE_CMD_REGISTER_DEVICE_JOIN_STATUS        = 0xA4 # pylint: disable=C0326; DONE
+XBEE_CMD_JOIN_NOTIFICATION_STATUS           = 0xA5 # pylint: disable=C0326; DONE
 
 # ZCL Global Commands
-ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00 #DONE
-ZCL_GLOBAL_CMD_READ_ATTR_RSP                = 0x01 #DONE
-ZCL_GLOBAL_CMD_WRITE_ATTR_REQ               = 0x02 #DONE
-ZCL_GLOBAL_CMD_WRITE_ATTR_UND               = 0x03 #DONE
-ZCL_GLOBAL_CMD_WRITE_ATTR_RSP               = 0x04 #DONE
-ZCL_GLOBAL_CMD_WRITE_ATTR_NO                = 0x05 #DONE
-ZCL_GLOBAL_CMD_CONF_REPT_REQ                = 0x06
-ZCL_GLOBAL_CMD_CONF_REPT_RSP                = 0x07
-ZCL_GLOBAL_CMD_READ_REPT_REQ                = 0x08
-ZCL_GLOBAL_CMD_READ_REPT_RSP                = 0x09
-ZCL_GLOBAL_CMD_REPT_ATTR                    = 0x0A
-ZCL_GLOBAL_CMD_DEFAULT_RSP                  = 0x0B
-ZCL_GLOBAL_CMD_DISC_ATTR_REQ                = 0x0C
-ZCL_GLOBAL_CMD_DISC_ATTR_RSP                = 0x0D
-ZCL_GLOBAL_CMD_READ_ATTR_STR_REQ            = 0x0E
-ZCL_GLOBAL_CMD_WRITE_ATTR_STR_REQ           = 0x0F
-ZCL_GLOBAL_CMD_WRITE_ATTR_STR_RSP           = 0x10
-ZCL_GLOBAL_CMD_DISC_RCMDS_REQ               = 0x11 #DONE
-ZCL_GLOBAL_CMD_DISC_RCMDS_RSP               = 0x12 #DONE
-ZCL_GLOBAL_CMD_DISC_GCMDS_REQ               = 0x13 #DONE
-ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14 #DONE
-ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ            = 0x15
-ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16
+ZCL_GLOBAL_CMD_READ_ATTR_REQ                = 0x00 # pylint: disable=C0326; DONE
+ZCL_GLOBAL_CMD_READ_ATTR_RSP                = 0x01 # pylint: disable=C0326; DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_REQ               = 0x02 # pylint: disable=C0326; DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_UND               = 0x03 # pylint: disable=C0326; DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_RSP               = 0x04 # pylint: disable=C0326; DONE
+ZCL_GLOBAL_CMD_WRITE_ATTR_NO                = 0x05 # pylint: disable=C0326; DONE
+ZCL_GLOBAL_CMD_CONF_REPT_REQ                = 0x06 # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_CONF_REPT_RSP                = 0x07 # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_READ_REPT_REQ                = 0x08 # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_READ_REPT_RSP                = 0x09 # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_REPT_ATTR                    = 0x0A # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_DEFAULT_RSP                  = 0x0B # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_DISC_ATTR_REQ                = 0x0C # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_DISC_ATTR_RSP                = 0x0D # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_READ_ATTR_STR_REQ            = 0x0E # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_WRITE_ATTR_STR_REQ           = 0x0F # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_WRITE_ATTR_STR_RSP           = 0x10 # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_DISC_RCMDS_REQ               = 0x11 # pylint: disable=C0326; #DONE
+ZCL_GLOBAL_CMD_DISC_RCMDS_RSP               = 0x12 # pylint: disable=C0326; #DONE
+ZCL_GLOBAL_CMD_DISC_GCMDS_REQ               = 0x13 # pylint: disable=C0326; #DONE
+ZCL_GLOBAL_CMD_DISC_GCMDS_RSP               = 0x14 # pylint: disable=C0326; #DONE
+ZCL_GLOBAL_CMD_DISC_ATTR_EXT_REQ            = 0x15 # pylint: disable=C0326;
+ZCL_GLOBAL_CMD_DISC_ATTR_EXT_RSP            = 0x16 # pylint: disable=C0326;
 
 # Internal ZCL frame types
-ATT_TYPE_READ_RSP                           = 0x00
-ATT_TYPE_WRITE_REQ                          = 0x01
-ATT_TYPE_WRITE_RSP                          = 0x02
+ATT_TYPE_READ_RSP                           = 0x00 # pylint: disable=C0326;
+ATT_TYPE_WRITE_REQ                          = 0x01 # pylint: disable=C0326;
+ATT_TYPE_WRITE_RSP                          = 0x02 # pylint: disable=C0326;
 
 
 ##########################################################################
@@ -86,7 +86,7 @@ ATT_TYPE_WRITE_RSP                          = 0x02
 # App Constants
 TEXT_SIZE = 30
 SPACE_STRING = "                                                             "
-APP_VERSION = "1.0.6"
+APP_VERSION = "1.0.5"
 
 # ZCL Global Command names
 ZCL_CMDS = ("Read Attributes", "Read Attributes Response", "Write Attributes", "Write Attributes Undivided",
@@ -305,7 +305,7 @@ def decode_explicit_cmd_req(data):
 
     length = (data[1] << 8) + data[2] - 20
     zb_data = print_frame_data(data, 23, length)
-    if zb_data is True:
+    if zb_data:
         if profile_id == 0x0000:
             # ZDO operation
             decode_zdo(zb_data, cluster_id)
@@ -437,7 +437,7 @@ def decode_zb_rx_indicator(data):
 
     length = (data[1] << 8) + data[2] - 18
     payload = print_frame_data(data, 21, length)
-    if payload is True:
+    if payload:
         if profile_id == 0x0000:
             decode_zdo(payload, cluster_id)
         elif profile_id == 0xC105:
@@ -853,7 +853,7 @@ def decode_zcl_cmd(z_cmd, frame_data, start):
     if z_cmd == ZCL_GLOBAL_CMD_READ_ATTR_REQ:
         decode_zcl_read_attribute_req(frame_data, start)
     elif z_cmd in (ZCL_GLOBAL_CMD_READ_ATTR_RSP, ZCL_GLOBAL_CMD_WRITE_ATTR_NO):
-        decode_zcl_attribute_req(frame_data, start, ATT_TYPE_READ_RSP)
+        decode_zcl_attribute_list(frame_data, start, ATT_TYPE_READ_RSP)
     elif z_cmd in (ZCL_GLOBAL_CMD_WRITE_ATTR_REQ, ZCL_GLOBAL_CMD_WRITE_ATTR_UND):
         decode_zcl_attribute_list(frame_data, start, ATT_TYPE_WRITE_REQ)
     elif z_cmd == ZCL_GLOBAL_CMD_WRITE_ATTR_RSP:
@@ -1332,7 +1332,7 @@ def get_packet_status(code):
     text = ""
     if code == 0x00: text = "packet not acknowledged, "
     if code & 0x01: text += "packet acknowledged, "
-    if text & 0x02: text += "broadcast packet, "
+    if code & 0x02: text += "broadcast packet, "
     if code & 0x20: text += "APS-encrypted packet, "
     if code & 0x40: text += "End-Device sent packet, "
     text = text[0:1].upper() + text[1:-2]
@@ -2048,8 +2048,8 @@ def show_version():
     Display app version number.
     """
 
-    print("\nXBeeParser version " + APP_VERSION)
-    print("Copyright (c) Tony Smith (@smittytone) 2018")
+    print("Version " + APP_VERSION)
+    print("Copyright (c) 2018-19 Tony Smith (@smittytone)")
     print("Licence: MIT <https://github.com/smittytone/XBeeParser/blob/master/LICENSE>\n")
 
 
@@ -2059,7 +2059,7 @@ def show_version():
 ###########################################################################
 
 if __name__ == '__main__':
-    showed_version = False
+    print("XBeeParser -- the XBee Packet Decoder")
     if len(sys.argv) > 1:
         # Run through the args to find options only
         arg_idx = 1
@@ -2070,13 +2070,12 @@ if __name__ == '__main__':
             if cmd in ("-v", "--version"):
                 # Print the version
                 show_version()
-                showed_version = True
                 arg_idx += 1
             elif cmd in ("-h", "--help"):
                 # Print help
                 show_help()
-                showed_version = True
                 arg_idx += 1
+                sys.exit(0)
             elif cmd in ("-e", "--escape"):
                 # Are we escaping?
                 if arg_idx < len(sys.argv) - 1:
@@ -2134,11 +2133,6 @@ if __name__ == '__main__':
             else:
                 arg_idx += 1
             if arg_idx >= len(sys.argv): done = True
-
-        # If no version info shown, show welcome
-        if showed_version is False:
-            # Print welcome
-            print("XBeeParser -- the XBee Packet Decoder")
 
         # Run through the args to find the packet data and process it
         # NOTE We do it this was so that we take into account options
