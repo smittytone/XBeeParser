@@ -1,4 +1,4 @@
-# XBeeParser 1.0.4 #
+# XBeeParser 1.0.5 #
 
 This is an XBee packet decoder written in Python 3.
 
@@ -15,7 +15,7 @@ python xbp.py 7e0020950013a20040522baa7d84027d840013a20040522baa2000fffe0101c105
 The XBee packet string need not be a single string; you can also include spaces:
 
 ```bash
-python xbp.py 7e 00 20 95 00 13 a2 00 40 52 2b aa 7d 84 02 7d 84 00 13 a2 00 40 52 2b aa 20 00 
+python xbp.py 7e 00 20 95 00 13 a2 00 40 52 2b aa 7d 84 02 7d 84 00 13 a2 00 40 52 2b aa 20 00
     ff fe 01 01 c1 05 10 1e 1b
 ```
 
@@ -104,8 +104,15 @@ Frame data                    : 010000F8FF071D00000010545E695B4B4844485555574651
 Checksum                      : 6E
 ```
 
+#### Tests ####
+
+The file [test_packets.md](test_packets.md) contains further examples.
+
 ## Release Notes ##
 
+- 1.0.5 &mdash; *Unreleased*
+    - Code improvements and restyling
+    - Minor bug fixes
 - 1.0.4 &mdash; *9 January 2019*
     - Add intro text on run
     - Some code clean-up
